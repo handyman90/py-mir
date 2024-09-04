@@ -1,39 +1,15 @@
+# employee_get.py
+
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
-from typing import Optional
+from typing import Dict, Any
 import requests
 
 app = FastAPI()
 
-# Define the GET data model based on common employee fields
-class EmployeeGet(BaseModel):
-    EmployeeID: Optional[str]  # String
-    Name: Optional[str]  # String
-    BranchID: Optional[str]  # String
-    CurrencyID: Optional[str]  # String
-    DateOfBirth: Optional[str]  # String (Date)
-    DepartmentID: Optional[str]  # String
-    EmployeeClassID: Optional[str]  # String
-    PaymentMethod: Optional[str]  # String
-    ReportsToID: Optional[str]  # String
-    Status: Optional[bool]  # Boolean
-    LastModifiedDateTime: Optional[str]  # String (DateTime)
-    IdentityNumber: Optional[str]  # String
-    IdentityType: Optional[str]  # String
-    SalesAccount: Optional[str]  # String
-    SalesSubaccount: Optional[str]  # String
-    ExpenseAccount: Optional[str]  # String
-    ExpenseSubaccount: Optional[str]  # String
-    Calendar: Optional[str]  # String
-    Country: Optional[str]  # String
-    LastName: Optional[str]  # String
-    Active: Optional[bool]  # Boolean
-    AddressIsSameAsInAccount: Optional[bool]  # Boolean
-    AddressValidated: Optional[bool]  # Boolean
-    Attention: Optional[str]  # String
-    BusinessAccount: Optional[str]  # String
-    CompanyName: Optional[str]  # String
-    # Add additional fields as needed
+# Define a dynamic model for GET operations
+class EmployeeGetModel(BaseModel):
+    data: Dict[str, Any]
 
 # Function to authenticate and get a session token
 def get_auth_token():
@@ -51,7 +27,7 @@ def get_auth_token():
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 # Endpoint to retrieve employee information
-@app.get("/organization/employee", response_model=EmployeeGet)
+@app.get("/organization/employee", response_model=EmployeeGetModel)
 def get_employee(employee_id: str, authorization: str = Header(None)):
     if authorization is None:
         authorization = get_auth_token()
@@ -63,7 +39,7 @@ def get_employee(employee_id: str, authorization: str = Header(None)):
 
     if response.status_code == 200:
         data = response.json()
-        return EmployeeGet(**data)
+        return EmployeeGetModel(data=data)
     elif response.status_code == 400:
         raise HTTPException(status_code=400, detail="Bad Request")
     elif response.status_code == 500:
