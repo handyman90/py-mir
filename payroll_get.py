@@ -1,27 +1,15 @@
+# payroll_get.py
+
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
-from typing import Optional
+from typing import Dict, Any
 import requests
 
 app = FastAPI()
 
-# Define the GET data model based on fields from pages 43-44
-class PayrollEmployeeGet(BaseModel):
-    EmployeeID: Optional[str]  # String
-    EmployeeName: Optional[str]  # String
-    PayrollID: Optional[str]  # String
-    PayGroup: Optional[str]  # String
-    DepartmentID: Optional[str]  # String
-    PositionID: Optional[str]  # String
-    EmploymentType: Optional[str]  # String
-    PayType: Optional[str]  # String
-    PayFrequency: Optional[str]  # String
-    BasicSalary: Optional[float]  # Float
-    Allowances: Optional[float]  # Float
-    Deductions: Optional[float]  # Float
-    NetPay: Optional[float]  # Float
-    LastModifiedDateTime: Optional[str]  # String (DateTime)
-    # Add additional fields as needed
+# Define a dynamic model for GET operations
+class PayrollEmployeeGetModel(BaseModel):
+    data: Dict[str, Any]
 
 # Function to authenticate and get a session token
 def get_auth_token():
@@ -39,7 +27,7 @@ def get_auth_token():
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 # Endpoint to retrieve payroll employee information
-@app.get("/organization/payroll_employee", response_model=PayrollEmployeeGet)
+@app.get("/organization/payroll_employee", response_model=PayrollEmployeeGetModel)
 def get_payroll_employee(employee_id: str, authorization: str = Header(None)):
     if authorization is None:
         authorization = get_auth_token()
@@ -51,7 +39,7 @@ def get_payroll_employee(employee_id: str, authorization: str = Header(None)):
 
     if response.status_code == 200:
         data = response.json()
-        return PayrollEmployeeGet(**data)
+        return PayrollEmployeeGetModel(data=data)
     elif response.status_code == 400:
         raise HTTPException(status_code=400, detail="Bad Request")
     elif response.status_code == 500:
