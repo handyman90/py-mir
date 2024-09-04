@@ -1,27 +1,15 @@
+# payroll_put.py
+
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
-from typing import Optional
+from typing import Dict, Any
 import requests
 
 app = FastAPI()
 
-# Define the PUT data model based on fields from pages 50-51
-class PayrollEmployeePut(BaseModel):
-    EmployeeID: Optional[str]  # String
-    EmployeeName: Optional[str]  # String
-    PayrollID: Optional[str]  # String
-    PayGroup: Optional[str]  # String
-    DepartmentID: Optional[str]  # String
-    PositionID: Optional[str]  # String
-    EmploymentType: Optional[str]  # String
-    PayType: Optional[str]  # String
-    PayFrequency: Optional[str]  # String
-    BasicSalary: Optional[float]  # Float
-    Allowances: Optional[float]  # Float
-    Deductions: Optional[float]  # Float
-    NetPay: Optional[float]  # Float
-    LastModifiedDateTime: Optional[str]  # String (DateTime)
-    # Add additional fields as needed
+# Define a dynamic model for PUT operations
+class PayrollEmployeePutModel(BaseModel):
+    data: Dict[str, Any]
 
 # Function to authenticate and get a session token
 def get_auth_token():
@@ -39,14 +27,14 @@ def get_auth_token():
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 # Endpoint to insert or update payroll employee information
-@app.put("/organization/payroll_employee", response_model=PayrollEmployeePut)
-def insert_payroll_employee(employee: PayrollEmployeePut, authorization: str = Header(None)):
+@app.put("/organization/payroll_employee", response_model=PayrollEmployeePutModel)
+def put_payroll_employee(employee: PayrollEmployeePutModel, authorization: str = Header(None)):
     if authorization is None:
         authorization = get_auth_token()
 
     url = "https://example.com/entity/GRP9Default/1/PayrollEmployee"
     headers = {"Authorization": authorization}
-    payload = employee.dict()
+    payload = employee.data
 
     response = requests.put(url, json=payload, headers=headers)
 
