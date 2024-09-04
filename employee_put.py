@@ -1,41 +1,15 @@
+# employee_put.py
+
 from fastapi import FastAPI, HTTPException, Header
 from pydantic import BaseModel
-from typing import Optional
+from typing import Dict, Any
 import requests
 
 app = FastAPI()
 
-# Define the PUT data model based on common employee fields
-class EmployeePut(BaseModel):
-    BranchID: Optional[str]  # String
-    CurrencyID: Optional[str]  # String
-    DateOfBirth: Optional[str]  # String (Date)
-    DepartmentID: Optional[str]  # String
-    EmployeeClassID: Optional[str]  # String
-    EmployeeID: Optional[str]  # String
-    Name: Optional[str]  # String
-    PaymentMethod: Optional[str]  # String
-    ReportsToID: Optional[str]  # String
-    Status: Optional[bool]  # Boolean
-    LastModifiedDateTime: Optional[str]  # String (DateTime)
-    IdentityNumber: Optional[str]  # String
-    IdentityType: Optional[str]  # String
-    SalesAccount: Optional[str]  # String
-    SalesSubaccount: Optional[str]  # String
-    ExpenseAccount: Optional[str]  # String
-    ExpenseSubaccount: Optional[str]  # String
-    Calendar: Optional[str]  # String
-    Country: Optional[str]  # String
-    LastName: Optional[str]  # String
-    Active: Optional[bool]  # Boolean
-    AddressIsSameAsInAccount: Optional[bool]  # Boolean
-    AddressValidated: Optional[bool]  # Boolean
-    Attention: Optional[str]  # String
-    BusinessAccount: Optional[str]  # String
-    CompanyName: Optional[str]  # String
-    CashAccount: Optional[str]  # String
-    PaymentInstructionsID: Optional[str]  # String
-    # Add additional fields as needed
+# Define a dynamic model for PUT operations
+class EmployeePutModel(BaseModel):
+    data: Dict[str, Any]
 
 # Function to authenticate and get a session token
 def get_auth_token():
@@ -53,14 +27,14 @@ def get_auth_token():
         raise HTTPException(status_code=401, detail="Authentication failed")
 
 # Endpoint to insert or update employee information
-@app.put("/organization/employee", response_model=EmployeePut)
-def insert_employee(employee: EmployeePut, authorization: str = Header(None)):
+@app.put("/organization/employee", response_model=EmployeePutModel)
+def put_employee(employee: EmployeePutModel, authorization: str = Header(None)):
     if authorization is None:
         authorization = get_auth_token()
 
     url = "https://example.com/entity/GRP9Default/1/Employee"
     headers = {"Authorization": authorization}
-    payload = employee.dict()
+    payload = employee.data
 
     response = requests.put(url, json=payload, headers=headers)
 
