@@ -34,77 +34,77 @@ def get_auth_token() -> dict:
 
 # Define the data models for the expected response structure
 class CustomField(BaseModel):
-    type: str = ''  # Default to empty string
-    value: Optional[str] = None  # Default to None
+    type: str
+    value: Optional[str]
 
 class Address(BaseModel):
-    id: str = ''  # Default to empty string
-    rowNumber: int = 0  # Default to 0
-    note: Optional[str] = None  # Default to None
-    AddressLine1: Dict[str, str] = {}  # Default to empty dict with string values
-    AddressLine2: Dict[str, str] = {}  # Default to empty dict with string values
-    City: Dict[str, str] = {}  # Default to empty dict with string values
-    Country: Dict[str, str] = {}  # Default to empty dict with string values
-    PostalCode: Dict[str, str] = {}  # Default to empty dict with string values
-    State: Dict[str, str] = {}  # Default to empty dict with string values
-    custom: Dict[str, str] = {}  # Default to empty dict with string values
+    id: str
+    rowNumber: int
+    note: Optional[str]
+    AddressLine1: Dict
+    AddressLine2: Dict
+    City: Dict
+    Country: Dict
+    PostalCode: Dict
+    State: Dict
+    custom: Dict
 
 class EmploymentHistory(BaseModel):
-    id: str = ''  # Default to empty string
-    rowNumber: int = 0  # Default to 0
-    note: Optional[str] = None  # Default to None
-    Active: Dict[str, str] = {}
-    EndDate: Dict[str, str] = {}
-    LineNbr: Dict[str, str] = {}
-    PositionID: Dict[str, str] = {}
-    RehireEligible: Dict[str, str] = {}
-    StartDate: Dict[str, str] = {}
-    StartReason: Dict[str, str] = {}
-    Terminated: Dict[str, str] = {}
-    TerminationReason: Dict[str, str] = {}
-    custom: Dict[str, str] = {}
+    id: str
+    rowNumber: int
+    note: Optional[str]
+    Active: Dict
+    EndDate: Dict
+    LineNbr: Dict
+    PositionID: Dict
+    RehireEligible: Dict
+    StartDate: Dict
+    StartReason: Dict
+    Terminated: Dict
+    TerminationReason: Dict
+    custom: Dict
 
 class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: CustomField = CustomField()
-    UsrPlacementID: CustomField = CustomField()
-    CalendarID: CustomField = CustomField()
-    HoursValidation: CustomField = CustomField()
-    SalesPersonID: CustomField = CustomField()
-    UserID: CustomField = CustomField()
-    AllowOverrideCury: CustomField = CustomField()
-    CuryRateTypeID: CustomField = CustomField()
-    AllowOverrideRate: CustomField = CustomField()
-    LabourItemID: CustomField = CustomField()
-    UnionID: CustomField = CustomField()
-    RouteEmails: CustomField = CustomField()
-    TimeCardRequired: CustomField = CustomField()
-    NoteID: CustomField = CustomField()
-    PrepaymentAcctID: CustomField = CustomField()
-    PrepaymentSubID: CustomField = CustomField()
-    ExpenseAcctID: CustomField = CustomField()
-    ExpenseSubID: CustomField = CustomField()
-    SalesAcctID: CustomField = CustomField()
-    SalesSubID: CustomField = CustomField()
-    TermsID: CustomField = CustomField()
+    AcctReferenceNbr: CustomField
+    UsrPlacementID: CustomField
+    CalendarID: CustomField
+    HoursValidation: CustomField
+    SalesPersonID: CustomField
+    UserID: CustomField
+    AllowOverrideCury: CustomField
+    CuryRateTypeID: CustomField
+    AllowOverrideRate: CustomField
+    LabourItemID: CustomField
+    UnionID: CustomField
+    RouteEmails: CustomField
+    TimeCardRequired: CustomField
+    NoteID: CustomField
+    PrepaymentAcctID: CustomField
+    PrepaymentSubID: CustomField
+    ExpenseAcctID: CustomField
+    ExpenseSubID: CustomField
+    SalesAcctID: CustomField
+    SalesSubID: CustomField
+    TermsID: CustomField
 
 class EmployeeData(BaseModel):
-    id: str = ''  # Default to empty string
-    rowNumber: int = 0  # Default to 0
-    note: Optional[str] = None  # Default to None
-    BranchID: Dict[str, str] = {}
-    Contact: Dict[str, str] = {}  # Adjust this based on the exact structure of Contact
-    CurrencyID: Dict[str, str] = {}
-    DateOfBirth: Dict[str, str] = {}
-    DepartmentID: Dict[str, str] = {}
-    EmployeeClassID: Dict[str, str] = {}
-    EmployeeCost: List[Dict] = []  # Default to an empty list
-    EmployeeID: Dict[str, str] = {}
-    EmploymentHistory: List[EmploymentHistory] = []  # Default to an empty list
-    Name: Dict[str, str] = {}
-    PaymentMethod: Dict[str, str] = {}
-    ReportsToID: Dict[str, str] = {}
-    Status: Dict[str, str] = {}
-    custom: CurrentEmployee = CurrentEmployee()  # Default to an empty CurrentEmployee
+    id: str
+    rowNumber: int
+    note: Optional[str]
+    BranchID: Dict
+    Contact: Dict  # Adjust this based on the exact structure of Contact
+    CurrencyID: Dict
+    DateOfBirth: Dict
+    DepartmentID: Dict
+    EmployeeClassID: Dict
+    EmployeeCost: List[Dict]
+    EmployeeID: Dict
+    EmploymentHistory: List[EmploymentHistory]
+    Name: Dict
+    PaymentMethod: Dict
+    ReportsToID: Dict
+    Status: Dict
+    custom: CurrentEmployee
 
 # Define a model for the token response
 class TokenResponseModel(BaseModel):
