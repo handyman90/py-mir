@@ -33,15 +33,80 @@ def get_auth_token() -> dict:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
 # Define the data models for the expected response structure
+class CustomField(BaseModel):
+    value: Optional[str]  # Made optional
+
+class ContactInfo(BaseModel):
+    DateOfBirth: CustomField  # Required
+    Email: Optional[CustomField]
+    Fax: Optional[CustomField]
+    FaxType: Optional[CustomField]
+    FirstName: CustomField  # Required
+    IdentityNumber: CustomField  # Required
+    IdentityType: CustomField  # Required
+    LastName: CustomField  # Required
+    MiddleName: Optional[CustomField]
+    Phone1: Optional[CustomField]
+    Phone1Type: Optional[CustomField]
+    Phone2: Optional[CustomField]
+    Phone2Type: Optional[CustomField]
+    Phone3: Optional[CustomField]
+    Phone3Type: Optional[CustomField]
+    Title: Optional[CustomField]
+
+class EmploymentHistory(BaseModel):
+    Active: CustomField  # Required
+    EndDate: Optional[CustomField]
+    LineNbr: CustomField  # Required
+    PositionID: CustomField  # Required
+    RehireEligible: CustomField  # Required
+    StartDate: CustomField  # Required
+    StartReason: CustomField  # Required
+    Terminated: Optional[CustomField]
+    TerminationReason: Optional[CustomField]
+    custom: Optional[Dict]
+    files: Optional[List[Dict]]
+
+class EmployeeSettings(BaseModel):
+    BranchID: CustomField  # Required
+    Calendar: Optional[CustomField]
+    CurrencyID: Optional[CustomField]
+    CurrencyRateTypeID: Optional[CustomField]
+    DepartmentID: CustomField  # Required
+    EmployeeClass: CustomField  # Required
+    EmployeeRefNbr: Optional[CustomField]
+    EnableCurrencyOverride: Optional[CustomField]
+    EnableRateOverride: Optional[CustomField]
+    LaborItem: Optional[CustomField]
+    RegularHoursValidation: Optional[CustomField]
+    ReportsTo: Optional[CustomField]
+    RouteEmails: Optional[CustomField]
+    Salesperson: Optional[CustomField]
+    TimeCardIsRequired: Optional[CustomField]
+
+class FinancialSettings(BaseModel):
+    APAccount: CustomField  # Required
+    APSubaccount: CustomField  # Required
+    CashAccount: CustomField  # Required
+    ExpenseAccount: CustomField  # Required
+    ExpenseSubaccount: CustomField  # Required
+    PaymentMethod: CustomField  # Required
+    PaymentInstructions: Optional[Dict]  # Adjust based on your structure
+    PrepaymentAccount: Optional[CustomField]
+    PrepaymentSubaccount: Optional[CustomField]
+    SalesAccount: CustomField  # Required
+    SalesSubaccount: CustomField  # Required
+    TaxZone: Optional[CustomField]
+    Terms: Optional[CustomField]
+
 class PayrollData(BaseModel):
-    id: Optional[str]  # Made optional
-    employeeId: Optional[str]  # Made optional
-    payrollDate: Optional[str]  # Made optional
-    grossPay: Optional[float]  # Made optional
-    netPay: Optional[float]  # Made optional
-    deductions: Optional[List[Dict]]  # Made optional
-    bonuses: Optional[List[Dict]]  # Made optional
-    status: Optional[str]  # Made optional
+    EmployeeID: CustomField  # Required
+    EmployeeName: CustomField  # Optional
+    Status: CustomField  # Optional
+    ContactInfo: ContactInfo  # Required
+    EmploymentHistory: List[EmploymentHistory]  # Required
+    EmployeeSettings: EmployeeSettings  # Required
+    FinancialSettings: FinancialSettings  # Required
 
 # Define a model for the token response
 class TokenResponseModel(BaseModel):
