@@ -5,27 +5,108 @@ import requests
 import json
 import os
 from pydantic import BaseModel
-from typing import Dict
+from typing import List, Optional, Dict
 
 app = FastAPI()
 
-# Get the script name dynamically and create a corresponding JSON file name
-script_name = os.path.splitext(os.path.basename(__file__))[0]  # Get the script name without extension
-json_file_name = f"{script_name}.json"  # Create the JSON file name (e.g., employee_get.json)
+# Define the data models for the response structure
 
-# Load the JSON file (employee data)
-try:
-    with open(json_file_name, 'r') as file:
-        employee_data = json.load(file)
-except FileNotFoundError:
-    employee_data = []  # Initialize an empty list if the JSON file doesn't exist
+class CustomField(BaseModel):
+    type: str
+    value: Optional[str]
+
+class Address(BaseModel):
+    id: str
+    rowNumber: int
+    note: Optional[str]
+    AddressLine1: Dict
+    AddressLine2: Dict
+    City: Dict
+    Country: Dict
+    PostalCode: Dict
+    State: Dict
+    custom: Dict
+
+class Contact(BaseModel):
+    id: str
+    rowNumber: int
+    note: Optional[str]
+    Activities: List[Dict]
+    Address: Address
+    CurrencyID: Dict
+    DateOfBirth: Dict
+    DepartmentID: Dict
+    EmployeeClassID: Dict
+    EmployeeID: Dict
+    EmploymentHistory: List[Dict]
+    Name: Dict
+    PaymentMethod: Dict
+    ReportsToID: Dict
+    Status: Dict
+    custom: Dict
+
+class EmploymentHistory(BaseModel):
+    id: str
+    rowNumber: int
+    note: Optional[str]
+    Active: Dict
+    EndDate: Dict
+    LineNbr: Dict
+    PositionID: Dict
+    RehireEligible: Dict
+    StartDate: Dict
+    StartReason: Dict
+    Terminated: Dict
+    TerminationReason: Dict
+    custom: Dict
+
+class CurrentEmployee(BaseModel):
+    AcctReferenceNbr: CustomField
+    UsrPlacementID: CustomField
+    CalendarID: CustomField
+    HoursValidation: CustomField
+    SalesPersonID: CustomField
+    UserID: CustomField
+    AllowOverrideCury: CustomField
+    CuryRateTypeID: CustomField
+    AllowOverrideRate: CustomField
+    LabourItemID: CustomField
+    UnionID: CustomField
+    RouteEmails: CustomField
+    TimeCardRequired: CustomField
+    NoteID: CustomField
+    PrepaymentAcctID: CustomField
+    PrepaymentSubID: CustomField
+    ExpenseAcctID: CustomField
+    ExpenseSubID: CustomField
+    SalesAcctID: CustomField
+    SalesSubID: CustomField
+    TermsID: CustomField
+
+class EmployeeData(BaseModel):
+    id: str
+    rowNumber: int
+    note: Optional[str]
+    BranchID: Dict
+    Contact: Contact
+    CurrencyID: Dict
+    DateOfBirth: Dict
+    DepartmentID: Dict
+    EmployeeClassID: Dict
+    EmployeeCost: List[Dict]
+    EmployeeID: Dict
+    EmploymentHistory: List[EmploymentHistory]
+    Name: Dict
+    PaymentMethod: Dict
+    ReportsToID: Dict
+    Status: Dict
+    custom: CurrentEmployee
 
 # Token URL and payload for authentication
 token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
 
 # Function to authenticate and get a session token
 def get_auth_token():
-    # Define the payload for authentication (raw payload converted to a dictionary)
     payload = {
         "grant_type": "password",
         "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
@@ -35,36 +116,20 @@ def get_auth_token():
         "password": "apiuser"
     }
 
-    # Set headers for the request
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded'
     }
 
-    # Make the POST request to get the token
     response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        # Extract the token from the response
         token = response.json().get('access_token')
         return token
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Define the data model for the employee response
-class EmployeeGetModel(BaseModel):
-    EmployeeID: str
-    Name: str
-    BranchID: str
-    CurrencyID: str
-    DateOfBirth: str
-    DepartmentID: str
-    EmployeeClassID: str
-    PaymentMethod: str
-    ReportsToID: str
-    Status: bool
-
 # Endpoint to retrieve employee information
-@app.get("/organization/employee", response_model=EmployeeGetModel)
+@app.get("/organization/employee", response_model=EmployeeData)
 def get_employee(employee_id: str, authorization: str = Header(None)):
     if authorization is None:
         authorization = get_auth_token()
@@ -73,12 +138,17 @@ def get_employee(employee_id: str, authorization: str = Header(None)):
     url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee?$filter=EmployeeID eq '{employee_id}'"
     headers = {"Authorization": f"Bearer {authorization}"}
 
-    # Try to fetch employee data from the external API
+    # Fetch employee data from the external API
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
-        data = response.json()
-        return EmployeeGetModel(**data)  # Unpack the JSON response into the model
+        employee_data = response.json()
+
+        # Write the employee data to a local JSON file (optional)
+        with open('employee_get.json', 'w') as file:
+            json.dump(employee_data, file, indent=4)
+
+        return EmployeeData(**employee_data)  # Return the employee data as a response
     elif response.status_code == 400:
         raise HTTPException(status_code=400, detail="Bad Request")
     elif response.status_code == 500:
