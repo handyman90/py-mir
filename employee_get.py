@@ -29,7 +29,7 @@ def get_auth_token() -> str:
     response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        return response.json().get('access_token')
+        return response.json().get('access_token')  # Changed here to return access_token
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
@@ -111,8 +111,8 @@ class EmployeeData(BaseModel):
 @app.get("/test-token")
 def test_token():
     try:
-        token = get_auth_token()
-        return {"status": "success", "token": token}
+        access_token = get_auth_token()  # Changed variable name here to access_token
+        return {"status": "success", "access_token": access_token}  # Changed response key to access_token
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
 
