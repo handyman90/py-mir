@@ -191,4 +191,14 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
         missing_fields = [error['loc'][-1] for error in e.errors() if error['type'] == 'value_error.missing']
         if missing_fields:
             detail_message = f"Missing required fields: {', '.join(missing_fields)}"
-            raise HTTPException(status_code=422
+            raise HTTPException(status_code=422, detail=detail_message)
+        raise HTTPException(status_code=422, detail="Validation error")
+
+    except Exception as e:
+        print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+
+# Run the app
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
