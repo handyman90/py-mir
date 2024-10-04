@@ -41,28 +41,28 @@ class Address(BaseModel):
     id: str = ''  # Default to empty string
     rowNumber: int = 0  # Default to 0
     note: Optional[str] = None  # Default to None
-    AddressLine1: Dict = {}
-    AddressLine2: Dict = {}
-    City: Dict = {}
-    Country: Dict = {}
-    PostalCode: Dict = {}
-    State: Dict = {}
-    custom: Dict = {}
+    AddressLine1: Dict[str, str] = {}  # Default to empty dict with string values
+    AddressLine2: Dict[str, str] = {}  # Default to empty dict with string values
+    City: Dict[str, str] = {}  # Default to empty dict with string values
+    Country: Dict[str, str] = {}  # Default to empty dict with string values
+    PostalCode: Dict[str, str] = {}  # Default to empty dict with string values
+    State: Dict[str, str] = {}  # Default to empty dict with string values
+    custom: Dict[str, str] = {}  # Default to empty dict with string values
 
 class EmploymentHistory(BaseModel):
     id: str = ''  # Default to empty string
     rowNumber: int = 0  # Default to 0
     note: Optional[str] = None  # Default to None
-    Active: Dict = {}
-    EndDate: Dict = {}
-    LineNbr: Dict = {}
-    PositionID: Dict = {}
-    RehireEligible: Dict = {}
-    StartDate: Dict = {}
-    StartReason: Dict = {}
-    Terminated: Dict = {}
-    TerminationReason: Dict = {}
-    custom: Dict = {}
+    Active: Dict[str, str] = {}
+    EndDate: Dict[str, str] = {}
+    LineNbr: Dict[str, str] = {}
+    PositionID: Dict[str, str] = {}
+    RehireEligible: Dict[str, str] = {}
+    StartDate: Dict[str, str] = {}
+    StartReason: Dict[str, str] = {}
+    Terminated: Dict[str, str] = {}
+    TerminationReason: Dict[str, str] = {}
+    custom: Dict[str, str] = {}
 
 class CurrentEmployee(BaseModel):
     AcctReferenceNbr: CustomField = CustomField()
@@ -91,19 +91,19 @@ class EmployeeData(BaseModel):
     id: str = ''  # Default to empty string
     rowNumber: int = 0  # Default to 0
     note: Optional[str] = None  # Default to None
-    BranchID: Dict = {}
-    Contact: Dict = {}  # The Contact field will need to match the structure returned
-    CurrencyID: Dict = {}
-    DateOfBirth: Dict = {}
-    DepartmentID: Dict = {}
-    EmployeeClassID: Dict = {}
+    BranchID: Dict[str, str] = {}
+    Contact: Dict[str, str] = {}  # Adjust this based on the exact structure of Contact
+    CurrencyID: Dict[str, str] = {}
+    DateOfBirth: Dict[str, str] = {}
+    DepartmentID: Dict[str, str] = {}
+    EmployeeClassID: Dict[str, str] = {}
     EmployeeCost: List[Dict] = []  # Default to an empty list
-    EmployeeID: Dict = {}
+    EmployeeID: Dict[str, str] = {}
     EmploymentHistory: List[EmploymentHistory] = []  # Default to an empty list
-    Name: Dict = {}
-    PaymentMethod: Dict = {}
-    ReportsToID: Dict = {}
-    Status: Dict = {}
+    Name: Dict[str, str] = {}
+    PaymentMethod: Dict[str, str] = {}
+    ReportsToID: Dict[str, str] = {}
+    Status: Dict[str, str] = {}
     custom: CurrentEmployee = CurrentEmployee()  # Default to an empty CurrentEmployee
 
 # Define a model for the token response
