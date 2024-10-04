@@ -3,14 +3,37 @@
 from fastapi import FastAPI, HTTPException, Header
 import requests
 import json
-import os
 from pydantic import BaseModel
-from typing import List, Optional, Dict
+from typing import List, Dict, Optional
 
 app = FastAPI()
 
-# Define the data models for the response structure
+# Token URL and payload for authentication
+token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
 
+# Function to authenticate and get a session token
+def get_auth_token() -> str:
+    payload = {
+        "grant_type": "password",
+        "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
+        "client_secret": "3gVM0RbnqDwXYfO1aekAyw",
+        "scope": "api",
+        "username": "apiuser",
+        "password": "apiuser"
+    }
+
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
+
+    response = requests.post(token_url, data=payload, headers=headers)
+
+    if response.status_code == 200:
+        return response.json().get('access_token')
+    else:
+        raise HTTPException(status_code=response.status_code, detail="Authentication failed")
+
+# Define the data models for the expected response structure
 class CustomField(BaseModel):
     type: str
     value: Optional[str]
@@ -25,24 +48,6 @@ class Address(BaseModel):
     Country: Dict
     PostalCode: Dict
     State: Dict
-    custom: Dict
-
-class Contact(BaseModel):
-    id: str
-    rowNumber: int
-    note: Optional[str]
-    Activities: List[Dict]
-    Address: Address
-    CurrencyID: Dict
-    DateOfBirth: Dict
-    DepartmentID: Dict
-    EmployeeClassID: Dict
-    EmployeeID: Dict
-    EmploymentHistory: List[Dict]
-    Name: Dict
-    PaymentMethod: Dict
-    ReportsToID: Dict
-    Status: Dict
     custom: Dict
 
 class EmploymentHistory(BaseModel):
@@ -88,7 +93,7 @@ class EmployeeData(BaseModel):
     rowNumber: int
     note: Optional[str]
     BranchID: Dict
-    Contact: Contact
+    Contact: Dict  # Adjust this based on the exact structure of Contact
     CurrencyID: Dict
     DateOfBirth: Dict
     DepartmentID: Dict
@@ -102,31 +107,14 @@ class EmployeeData(BaseModel):
     Status: Dict
     custom: CurrentEmployee
 
-# Token URL and payload for authentication
-token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
-
-# Function to authenticate and get a session token
-def get_auth_token():
-    payload = {
-        "grant_type": "password",
-        "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
-        "client_secret": "3gVM0RbnqDwXYfO1aekAyw",
-        "scope": "api",
-        "username": "apiuser",
-        "password": "apiuser"
-    }
-
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-
-    response = requests.post(token_url, data=payload, headers=headers)
-
-    if response.status_code == 200:
-        token = response.json().get('access_token')
-        return token
-    else:
-        raise HTTPException(status_code=response.status_code, detail="Authentication failed")
+# Endpoint to test the token
+@app.get("/test-token")
+def test_token():
+    try:
+        token = get_auth_token()
+        return {"status": "success", "token": token}
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
 
 # Endpoint to retrieve employee information
 @app.get("/organization/employee", response_model=EmployeeData)
@@ -143,11 +131,6 @@ def get_employee(employee_id: str, authorization: str = Header(None)):
 
     if response.status_code == 200:
         employee_data = response.json()
-
-        # Write the employee data to a local JSON file (optional)
-        with open('employee_get.json', 'w') as file:
-            json.dump(employee_data, file, indent=4)
-
         return EmployeeData(**employee_data)  # Return the employee data as a response
     elif response.status_code == 400:
         raise HTTPException(status_code=400, detail="Bad Request")
