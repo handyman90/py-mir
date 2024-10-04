@@ -34,77 +34,77 @@ def get_auth_token() -> dict:
 
 # Define the data models for the expected response structure
 class CustomField(BaseModel):
-    type: str
-    value: Optional[str]
+    type: Optional[str]  # Made optional
+    value: Optional[str]  # Made optional
 
 class Address(BaseModel):
-    id: str
-    rowNumber: int
-    note: Optional[str]
-    AddressLine1: Dict
-    AddressLine2: Dict
-    City: Dict
-    Country: Dict
-    PostalCode: Dict
-    State: Dict
-    custom: Dict
+    id: Optional[str]  # Made optional
+    rowNumber: Optional[int]  # Made optional
+    note: Optional[str]  # Made optional
+    AddressLine1: Optional[Dict]  # Made optional
+    AddressLine2: Optional[Dict]  # Made optional
+    City: Optional[Dict]  # Made optional
+    Country: Optional[Dict]  # Made optional
+    PostalCode: Optional[Dict]  # Made optional
+    State: Optional[Dict]  # Made optional
+    custom: Optional[Dict]  # Made optional
 
 class EmploymentHistory(BaseModel):
-    id: str
-    rowNumber: int
-    note: Optional[str]
-    Active: Dict
-    EndDate: Dict
-    LineNbr: Dict
-    PositionID: Dict
-    RehireEligible: Dict
-    StartDate: Dict
-    StartReason: Dict
-    Terminated: Dict
-    TerminationReason: Dict
-    custom: Dict
+    id: Optional[str]  # Made optional
+    rowNumber: Optional[int]  # Made optional
+    note: Optional[str]  # Made optional
+    Active: Optional[Dict]  # Made optional
+    EndDate: Optional[Dict]  # Made optional
+    LineNbr: Optional[Dict]  # Made optional
+    PositionID: Optional[Dict]  # Made optional
+    RehireEligible: Optional[Dict]  # Made optional
+    StartDate: Optional[Dict]  # Made optional
+    StartReason: Optional[Dict]  # Made optional
+    Terminated: Optional[Dict]  # Made optional
+    TerminationReason: Optional[Dict]  # Made optional
+    custom: Optional[Dict]  # Made optional
 
 class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: Optional[CustomField]
-    UsrPlacementID: Optional[CustomField]
-    CalendarID: Optional[CustomField]
-    HoursValidation: Optional[CustomField]
-    SalesPersonID: Optional[CustomField]
-    UserID: Optional[CustomField]
-    AllowOverrideCury: Optional[CustomField]
-    CuryRateTypeID: Optional[CustomField]
-    AllowOverrideRate: Optional[CustomField]
-    LabourItemID: Optional[CustomField]
-    UnionID: Optional[CustomField]
-    RouteEmails: Optional[CustomField]
-    TimeCardRequired: Optional[CustomField]
-    NoteID: Optional[CustomField]
-    PrepaymentAcctID: Optional[CustomField]
-    PrepaymentSubID: Optional[CustomField]
-    ExpenseAcctID: Optional[CustomField]
-    ExpenseSubID: Optional[CustomField]
-    SalesAcctID: Optional[CustomField]
-    SalesSubID: Optional[CustomField]
-    TermsID: Optional[CustomField]
+    AcctReferenceNbr: Optional[CustomField]  # Made optional
+    UsrPlacementID: Optional[CustomField]  # Made optional
+    CalendarID: Optional[CustomField]  # Made optional
+    HoursValidation: Optional[CustomField]  # Made optional
+    SalesPersonID: Optional[CustomField]  # Made optional
+    UserID: Optional[CustomField]  # Made optional
+    AllowOverrideCury: Optional[CustomField]  # Made optional
+    CuryRateTypeID: Optional[CustomField]  # Made optional
+    AllowOverrideRate: Optional[CustomField]  # Made optional
+    LabourItemID: Optional[CustomField]  # Made optional
+    UnionID: Optional[CustomField]  # Made optional
+    RouteEmails: Optional[CustomField]  # Made optional
+    TimeCardRequired: Optional[CustomField]  # Made optional
+    NoteID: Optional[CustomField]  # Made optional
+    PrepaymentAcctID: Optional[CustomField]  # Made optional
+    PrepaymentSubID: Optional[CustomField]  # Made optional
+    ExpenseAcctID: Optional[CustomField]  # Made optional
+    ExpenseSubID: Optional[CustomField]  # Made optional
+    SalesAcctID: Optional[CustomField]  # Made optional
+    SalesSubID: Optional[CustomField]  # Made optional
+    TermsID: Optional[CustomField]  # Made optional
 
 class EmployeeData(BaseModel):
-    id: str
-    rowNumber: int
-    note: Optional[str]
-    BranchID: Dict
-    Contact: Optional[Dict]  # Adjusted to be optional
-    CurrencyID: Dict
-    DateOfBirth: Optional[Dict]  # Adjusted to be optional
-    DepartmentID: Optional[Dict]  # Adjusted to be optional
-    EmployeeClassID: Optional[Dict]  # Adjusted to be optional
-    EmployeeCost: Optional[List[Dict]]  # Made optional to avoid missing required fields
+    id: Optional[str]  # Made optional
+    rowNumber: Optional[int]  # Made optional
+    note: Optional[str]  # Made optional
+    BranchID: Optional[Dict]  # Made optional
+    Contact: Optional[Dict]  # Made optional
+    CurrencyID: Optional[Dict]  # Made optional
+    DateOfBirth: Optional[Dict]  # Made optional
+    DepartmentID: Optional[Dict]  # Made optional
+    EmployeeClassID: Optional[Dict]  # Made optional
+    EmployeeCost: Optional[List[Dict]]  # Made optional
     EmployeeID: Optional[Dict]  # Made optional
     EmploymentHistory: Optional[List[EmploymentHistory]]  # Made optional
-    Name: Dict
+    Name: Optional[Dict]  # Made optional
     PaymentMethod: Optional[Dict]  # Made optional
     ReportsToID: Optional[Dict]  # Made optional
     Status: Optional[Dict]  # Made optional
-    custom: CurrentEmployee
+    custom: Optional[CurrentEmployee]  # Made optional
 
 # Define a model for the token response
 class TokenResponseModel(BaseModel):
@@ -191,14 +191,4 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
         missing_fields = [error['loc'][-1] for error in e.errors() if error['type'] == 'value_error.missing']
         if missing_fields:
             detail_message = f"Missing required fields: {', '.join(missing_fields)}"
-            raise HTTPException(status_code=422, detail=detail_message)
-        raise HTTPException(status_code=422, detail="Validation error")
-
-    except Exception as e:
-        print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
-
-# Run the app
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
+            raise HTTPException(status_code=422
