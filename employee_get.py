@@ -11,7 +11,7 @@ app = FastAPI()
 token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
 
 # Function to authenticate and get a session token
-def get_auth_token() -> str:
+def get_auth_token() -> dict:
     payload = {
         "grant_type": "password",
         "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
@@ -28,7 +28,7 @@ def get_auth_token() -> str:
     response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        return response.json().get('access_token')  # Return access_token from the response
+        return response.json()  # Return the entire token response
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
@@ -106,12 +106,24 @@ class EmployeeData(BaseModel):
     Status: Dict
     custom: CurrentEmployee
 
+# Define a model for the token response
+class TokenResponseModel(BaseModel):
+    access_token: str
+    token_type: str
+    expires_in: int  # The expiration time in seconds
+    scope: str
+
 # Endpoint to test the token
-@app.get("/test-token")
+@app.get("/test-token", response_model=TokenResponseModel)
 def test_token():
     try:
-        access_token = get_auth_token()  # Get the access token
-        return {"status": "success", "access_token": access_token}  # Return access_token
+        token_response = get_auth_token()  # Get the complete token response
+        return {
+            "access_token": token_response.get("access_token"),
+            "token_type": token_response.get("token_type"),
+            "expires_in": token_response.get("expires_in"),
+            "scope": token_response.get("scope")
+        }
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
 
@@ -120,7 +132,7 @@ def test_token():
 def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
     # If no authorization token is provided in the header, get a new token
     if authorization is None:
-        authorization = get_auth_token()  # Retrieve a new token
+        authorization = get_auth_token().get("access_token")  # Retrieve a new token
 
     # External API URL to fetch employee information
     url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee"
@@ -132,7 +144,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
     
     # Include the authorization token in the headers
     headers = {
-        "Authorization": f"Bearer {authorization}",
+        "Authorization": f"Bearer {authorization}",  # Use the retrieved token
         'Content-Type': 'application/json'  # Setting content type
     }
 
@@ -156,4 +168,4 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000)  # Changed to 127.0.0.1
