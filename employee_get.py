@@ -2,7 +2,6 @@
 
 from fastapi import FastAPI, HTTPException, Header
 import requests
-import json
 from pydantic import BaseModel
 from typing import List, Dict, Optional
 
@@ -29,7 +28,7 @@ def get_auth_token() -> str:
     response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        return response.json().get('access_token')  # Changed here to return access_token
+        return response.json().get('access_token')  # Return access_token from the response
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
@@ -111,32 +110,44 @@ class EmployeeData(BaseModel):
 @app.get("/test-token")
 def test_token():
     try:
-        access_token = get_auth_token()  # Changed variable name here to access_token
-        return {"status": "success", "access_token": access_token}  # Changed response key to access_token
+        access_token = get_auth_token()  # Get the access token
+        return {"status": "success", "access_token": access_token}  # Return access_token
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
 
 # Endpoint to retrieve employee information
 @app.get("/organization/employee", response_model=EmployeeData)
-def get_employee(employee_id: str, authorization: str = Header(None)):
+def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
     # If no authorization token is provided in the header, get a new token
     if authorization is None:
-        authorization = get_auth_token()
+        authorization = get_auth_token()  # Retrieve a new token
 
     # External API URL to fetch employee information
-    url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee?$filter=EmployeeID eq '{employee_id}'"
+    url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee"
+
+    # Prepare the payload for the GET request
+    payload = {
+        "$filter": f"EmployeeID eq '{employee_id}'"
+    }
     
     # Include the authorization token in the headers
-    headers = {"Authorization": f"Bearer {authorization}"}
+    headers = {
+        "Authorization": f"Bearer {authorization}",
+        'Content-Type': 'application/json'  # Setting content type
+    }
 
     # Fetch employee data from the external API
-    response = requests.get(url, headers=headers)
+    response = requests.get(url, headers=headers, params=payload)  # Pass payload as query parameters
 
     if response.status_code == 200:
         employee_data = response.json()
         return EmployeeData(**employee_data)  # Return the employee data as a response
     elif response.status_code == 400:
         raise HTTPException(status_code=400, detail="Bad Request")
+    elif response.status_code == 401:
+        raise HTTPException(status_code=401, detail="Unauthorized - Please check your access token")
+    elif response.status_code == 403:
+        raise HTTPException(status_code=403, detail="Forbidden - Access denied")
     elif response.status_code == 500:
         raise HTTPException(status_code=500, detail="Internal Server Error")
     else:
