@@ -130,52 +130,56 @@ def test_token():
 # Endpoint to retrieve employee information
 @app.get("/organization/employee", response_model=EmployeeData)
 def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
-    # If no authorization token is provided in the header, get a new token
-    if authorization is None:
-        token_response = get_auth_token()  # Retrieve a new token
-        authorization = token_response.get("access_token")  # Use the access_token
+    try:
+        # If no authorization token is provided in the header, get a new token
+        if authorization is None:
+            token_response = get_auth_token()  # Retrieve a new token
+            authorization = token_response.get("access_token")  # Use the access_token
 
-    # External API URL to fetch employee information
-    url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee"
+        # External API URL to fetch employee information
+        url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee"
 
-    # Prepare the payload for the GET request
-    payload = {
-        "$filter": f"EmployeeID eq '{employee_id}'"
-    }
-    
-    # Include the authorization token in the headers
-    headers = {
-        "Authorization": f"Bearer {authorization}",  # Use the retrieved token
-        'Content-Type': 'application/json'  # Setting content type
-    }
+        # Prepare the payload for the GET request
+        payload = {
+            "$filter": f"EmployeeID eq '{employee_id}'"
+        }
+        
+        # Include the authorization token in the headers
+        headers = {
+            "Authorization": f"Bearer {authorization}",  # Use the retrieved token
+            'Content-Type': 'application/json'  # Setting content type
+        }
 
-    # Log the request URL and headers for debugging
-    print(f"Requesting URL: {url}")
-    print(f"Request Headers: {headers}")
-    print(f"Request Payload: {payload}")
+        # Log the request URL and headers for debugging
+        print(f"Requesting URL: {url}")
+        print(f"Request Headers: {headers}")
+        print(f"Request Payload: {payload}")
 
-    # Fetch employee data from the external API
-    response = requests.get(url, headers=headers, params=payload)  # Pass payload as query parameters
+        # Fetch employee data from the external API
+        response = requests.get(url, headers=headers, params=payload)  # Pass payload as query parameters
 
-    # Log the response status code and content
-    print(f"Response Status Code: {response.status_code}")
-    print(f"Response Content: {response.text}")
+        # Log the response status code and content
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Response Content: {response.text}")
 
-    if response.status_code == 200:
-        employee_data = response.json()
-        return EmployeeData(**employee_data)  # Return the employee data as a response
-    elif response.status_code == 400:
-        raise HTTPException(status_code=400, detail="Bad Request")
-    elif response.status_code == 401:
-        raise HTTPException(status_code=401, detail="Unauthorized - Please check your access token")
-    elif response.status_code == 403:
-        raise HTTPException(status_code=403, detail="Forbidden - Access denied")
-    elif response.status_code == 500:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-    else:
-        raise HTTPException(status_code=response.status_code, detail="An error occurred")
+        if response.status_code == 200:
+            employee_data = response.json()
+            return EmployeeData(**employee_data)  # Return the employee data as a response
+        elif response.status_code == 400:
+            raise HTTPException(status_code=400, detail="Bad Request")
+        elif response.status_code == 401:
+            raise HTTPException(status_code=401, detail="Unauthorized - Please check your access token")
+        elif response.status_code == 403:
+            raise HTTPException(status_code=403, detail="Forbidden - Access denied")
+        elif response.status_code == 500:
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+        else:
+            raise HTTPException(status_code=response.status_code, detail="An error occurred")
+    except Exception as e:
+        print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)  # Changed to 127.0.0.1
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
