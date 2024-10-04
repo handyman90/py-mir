@@ -132,7 +132,8 @@ def test_token():
 def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
     # If no authorization token is provided in the header, get a new token
     if authorization is None:
-        authorization = get_auth_token().get("access_token")  # Retrieve a new token
+        token_response = get_auth_token()  # Retrieve a new token
+        authorization = token_response.get("access_token")  # Use the access_token
 
     # External API URL to fetch employee information
     url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee"
@@ -148,8 +149,17 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
         'Content-Type': 'application/json'  # Setting content type
     }
 
+    # Log the request URL and headers for debugging
+    print(f"Requesting URL: {url}")
+    print(f"Request Headers: {headers}")
+    print(f"Request Payload: {payload}")
+
     # Fetch employee data from the external API
     response = requests.get(url, headers=headers, params=payload)  # Pass payload as query parameters
+
+    # Log the response status code and content
+    print(f"Response Status Code: {response.status_code}")
+    print(f"Response Content: {response.text}")
 
     if response.status_code == 200:
         employee_data = response.json()
