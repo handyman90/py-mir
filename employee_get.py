@@ -2,7 +2,7 @@
 
 from fastapi import FastAPI, HTTPException, Header
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 from typing import List, Dict, Optional
 
 app = FastAPI()
@@ -34,77 +34,77 @@ def get_auth_token() -> dict:
 
 # Define the data models for the expected response structure
 class CustomField(BaseModel):
-    type: str
-    value: Optional[str]
+    type: str = ''  # Default to empty string
+    value: Optional[str] = None  # Default to None
 
 class Address(BaseModel):
-    id: str
-    rowNumber: int
-    note: Optional[str]
-    AddressLine1: Dict
-    AddressLine2: Dict
-    City: Dict
-    Country: Dict
-    PostalCode: Dict
-    State: Dict
-    custom: Dict
+    id: str = ''  # Default to empty string
+    rowNumber: int = 0  # Default to 0
+    note: Optional[str] = None  # Default to None
+    AddressLine1: Dict = {}
+    AddressLine2: Dict = {}
+    City: Dict = {}
+    Country: Dict = {}
+    PostalCode: Dict = {}
+    State: Dict = {}
+    custom: Dict = {}
 
 class EmploymentHistory(BaseModel):
-    id: str
-    rowNumber: int
-    note: Optional[str]
-    Active: Dict
-    EndDate: Dict
-    LineNbr: Dict
-    PositionID: Dict
-    RehireEligible: Dict
-    StartDate: Dict
-    StartReason: Dict
-    Terminated: Dict
-    TerminationReason: Dict
-    custom: Dict
+    id: str = ''  # Default to empty string
+    rowNumber: int = 0  # Default to 0
+    note: Optional[str] = None  # Default to None
+    Active: Dict = {}
+    EndDate: Dict = {}
+    LineNbr: Dict = {}
+    PositionID: Dict = {}
+    RehireEligible: Dict = {}
+    StartDate: Dict = {}
+    StartReason: Dict = {}
+    Terminated: Dict = {}
+    TerminationReason: Dict = {}
+    custom: Dict = {}
 
 class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: CustomField
-    UsrPlacementID: CustomField
-    CalendarID: CustomField
-    HoursValidation: CustomField
-    SalesPersonID: CustomField
-    UserID: CustomField
-    AllowOverrideCury: CustomField
-    CuryRateTypeID: CustomField
-    AllowOverrideRate: CustomField
-    LabourItemID: CustomField
-    UnionID: CustomField
-    RouteEmails: CustomField
-    TimeCardRequired: CustomField
-    NoteID: CustomField
-    PrepaymentAcctID: CustomField
-    PrepaymentSubID: CustomField
-    ExpenseAcctID: CustomField
-    ExpenseSubID: CustomField
-    SalesAcctID: CustomField
-    SalesSubID: CustomField
-    TermsID: CustomField
+    AcctReferenceNbr: CustomField = CustomField()
+    UsrPlacementID: CustomField = CustomField()
+    CalendarID: CustomField = CustomField()
+    HoursValidation: CustomField = CustomField()
+    SalesPersonID: CustomField = CustomField()
+    UserID: CustomField = CustomField()
+    AllowOverrideCury: CustomField = CustomField()
+    CuryRateTypeID: CustomField = CustomField()
+    AllowOverrideRate: CustomField = CustomField()
+    LabourItemID: CustomField = CustomField()
+    UnionID: CustomField = CustomField()
+    RouteEmails: CustomField = CustomField()
+    TimeCardRequired: CustomField = CustomField()
+    NoteID: CustomField = CustomField()
+    PrepaymentAcctID: CustomField = CustomField()
+    PrepaymentSubID: CustomField = CustomField()
+    ExpenseAcctID: CustomField = CustomField()
+    ExpenseSubID: CustomField = CustomField()
+    SalesAcctID: CustomField = CustomField()
+    SalesSubID: CustomField = CustomField()
+    TermsID: CustomField = CustomField()
 
 class EmployeeData(BaseModel):
-    id: str
-    rowNumber: int
-    note: Optional[str]
-    BranchID: Dict
-    Contact: Dict  # The Contact field will need to match the structure returned
-    CurrencyID: Dict
-    DateOfBirth: Dict
-    DepartmentID: Dict
-    EmployeeClassID: Dict
-    EmployeeCost: List[Dict]
-    EmployeeID: Dict
-    EmploymentHistory: List[EmploymentHistory]
-    Name: Dict
-    PaymentMethod: Dict
-    ReportsToID: Dict
-    Status: Dict
-    custom: CurrentEmployee
+    id: str = ''  # Default to empty string
+    rowNumber: int = 0  # Default to 0
+    note: Optional[str] = None  # Default to None
+    BranchID: Dict = {}
+    Contact: Dict = {}  # The Contact field will need to match the structure returned
+    CurrencyID: Dict = {}
+    DateOfBirth: Dict = {}
+    DepartmentID: Dict = {}
+    EmployeeClassID: Dict = {}
+    EmployeeCost: List[Dict] = []  # Default to an empty list
+    EmployeeID: Dict = {}
+    EmploymentHistory: List[EmploymentHistory] = []  # Default to an empty list
+    Name: Dict = {}
+    PaymentMethod: Dict = {}
+    ReportsToID: Dict = {}
+    Status: Dict = {}
+    custom: CurrentEmployee = CurrentEmployee()  # Default to an empty CurrentEmployee
 
 # Define a model for the token response
 class TokenResponseModel(BaseModel):
@@ -184,7 +184,10 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
             raise HTTPException(status_code=500, detail="Internal Server Error")
         else:
             raise HTTPException(status_code=response.status_code, detail="An error occurred")
-    
+
+    except ValidationError as e:
+        # Handle missing fields gracefully
+        raise HTTPException(status_code=422, detail=f"Validation error: {e.errors()}")
     except Exception as e:
         print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
