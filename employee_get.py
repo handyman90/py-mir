@@ -62,7 +62,7 @@ def get_employee(employee_id: str, authorization: str = Header(None)):
     url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee?$filter=EmployeeID eq '{employee_id}'"
     headers = {"Authorization": f"Bearer {authorization}"}
 
-    # Make a request to the external API to fetch employee data
+    # Try to fetch employee data from the external API
     response = requests.get(url, headers=headers)
 
     if response.status_code == 200:
