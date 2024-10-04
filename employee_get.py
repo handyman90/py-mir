@@ -119,11 +119,14 @@ def test_token():
 # Endpoint to retrieve employee information
 @app.get("/organization/employee", response_model=EmployeeData)
 def get_employee(employee_id: str, authorization: str = Header(None)):
+    # If no authorization token is provided in the header, get a new token
     if authorization is None:
         authorization = get_auth_token()
 
     # External API URL to fetch employee information
     url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee?$filter=EmployeeID eq '{employee_id}'"
+    
+    # Include the authorization token in the headers
     headers = {"Authorization": f"Bearer {authorization}"}
 
     # Fetch employee data from the external API
