@@ -1,53 +1,137 @@
 # payroll_get.py
 
 from fastapi import FastAPI, HTTPException, Header
-from pydantic import BaseModel
-from typing import Dict, Any
 import requests
+from pydantic import BaseModel, ValidationError
+from typing import List, Dict, Optional
 
 app = FastAPI()
 
-# Define a dynamic model for GET operations
-class PayrollEmployeeGetModel(BaseModel):
-    data: Dict[str, Any]
+# Token URL and payload for authentication
+token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
 
 # Function to authenticate and get a session token
-def get_auth_token():
-    token_url = "https://example.com/entity/auth/login"
+def get_auth_token() -> dict:
     payload = {
-        "name": "admin",
-        "password": "123",
-        "company": "Company"
+        "grant_type": "password",
+        "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
+        "client_secret": "3gVM0RbnqDwXYfO1aekAyw",
+        "scope": "api",
+        "username": "apiuser",
+        "password": "apiuser"
     }
 
-    response = requests.post(token_url, json=payload)
-    if response.status_code == 204:
-        return response.headers['Authorization']
-    else:
-        raise HTTPException(status_code=401, detail="Authentication failed")
+    headers = {
+        'Content-Type': 'application/x-www-form-urlencoded'
+    }
 
-# Endpoint to retrieve payroll employee information
-@app.get("/organization/payroll_employee", response_model=PayrollEmployeeGetModel)
-def get_payroll_employee(employee_id: str, authorization: str = Header(None)):
-    if authorization is None:
-        authorization = get_auth_token()
-
-    url = f"https://example.com/entity/GRP9Default/1/PayrollEmployee?$filter=EmployeeID eq '{employee_id}'"
-    headers = {"Authorization": authorization}
-
-    response = requests.get(url, headers=headers)
+    response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        data = response.json()
-        return PayrollEmployeeGetModel(data=data)
-    elif response.status_code == 400:
-        raise HTTPException(status_code=400, detail="Bad Request")
-    elif response.status_code == 500:
-        raise HTTPException(status_code=500, detail="Internal Server Error")
+        return response.json()  # Return the entire token response
     else:
-        raise HTTPException(status_code=response.status_code, detail="An error occurred")
+        raise HTTPException(status_code=response.status_code, detail="Authentication failed")
+
+# Define the data models for the expected response structure
+class PayrollData(BaseModel):
+    id: Optional[str]  # Made optional
+    employeeId: Optional[str]  # Made optional
+    payrollDate: Optional[str]  # Made optional
+    grossPay: Optional[float]  # Made optional
+    netPay: Optional[float]  # Made optional
+    deductions: Optional[List[Dict]]  # Made optional
+    bonuses: Optional[List[Dict]]  # Made optional
+    status: Optional[str]  # Made optional
+
+# Define a model for the token response
+class TokenResponseModel(BaseModel):
+    access_token: str
+    token_type: str
+    expires_in: int  # The expiration time in seconds
+    scope: str
+
+# Endpoint to test the token
+@app.get("/test-token", response_model=TokenResponseModel)
+def test_token():
+    try:
+        token_response = get_auth_token()  # Get the complete token response
+        return {
+            "access_token": token_response.get("access_token"),
+            "token_type": token_response.get("token_type"),
+            "expires_in": token_response.get("expires_in"),
+            "scope": token_response.get("scope")
+        }
+    except HTTPException as e:
+        raise HTTPException(status_code=e.status_code, detail=e.detail)
+
+# Endpoint to retrieve payroll information
+@app.get("/organization/payroll", response_model=List[PayrollData])
+def get_payroll(employee_id: str, authorization: Optional[str] = Header(None)):
+    try:
+        # If no authorization token is provided in the header, get a new token
+        if authorization is None:
+            token_response = get_auth_token()  # Retrieve a new token
+            authorization = token_response.get("access_token")  # Use the access_token
+
+        # External API URL to fetch payroll information
+        url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Payroll"
+
+        # Prepare the payload for the GET request
+        payload = {
+            "$filter": f"EmployeeID eq '{employee_id}'"
+        }
+        
+        # Include the authorization token in the headers
+        headers = {
+            "Authorization": f"Bearer {authorization}",  # Use the retrieved token
+            'Content-Type': 'application/json'  # Setting content type
+        }
+
+        # Log the request URL and headers for debugging
+        print(f"Requesting URL: {url}")
+        print(f"Request Headers: {headers}")
+        print(f"Request Payload: {payload}")
+
+        # Fetch payroll data from the external API
+        response = requests.get(url, headers=headers, params=payload)  # Pass payload as query parameters
+
+        # Log the response status code and content
+        print(f"Response Status Code: {response.status_code}")
+        print(f"Response Content: {response.text}")
+
+        if response.status_code == 200:
+            payroll_data = response.json()
+
+            # Check if the response is a list of dictionaries
+            if isinstance(payroll_data, list):
+                return [PayrollData(**item) for item in payroll_data]  # Return list of payroll data
+            else:
+                raise HTTPException(status_code=500, detail="Unexpected response format")
+
+        elif response.status_code == 400:
+            raise HTTPException(status_code=400, detail="Bad Request")
+        elif response.status_code == 401:
+            raise HTTPException(status_code=401, detail="Unauthorized - Please check your access token")
+        elif response.status_code == 403:
+            raise HTTPException(status_code=403, detail="Forbidden - Access denied")
+        elif response.status_code == 500:
+            raise HTTPException(status_code=500, detail="Internal Server Error")
+        else:
+            raise HTTPException(status_code=response.status_code, detail="An error occurred")
+
+    except ValidationError as e:
+        # Handle validation errors and provide detailed feedback
+        missing_fields = [error['loc'][-1] for error in e.errors() if error['type'] == 'value_error.missing']
+        if missing_fields:
+            detail_message = f"Missing required fields: {', '.join(missing_fields)}"
+            raise HTTPException(status_code=422, detail=detail_message)
+        raise HTTPException(status_code=422, detail="Validation error")
+
+    except Exception as e:
+        print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
+        raise HTTPException(status_code=500, detail="An unexpected error occurred")
 
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
