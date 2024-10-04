@@ -1,14 +1,22 @@
 # employee_get.py
 
-from fastapi import FastAPI, HTTPException
-import json
+from fastapi import FastAPI, HTTPException, Header
 import requests
+import json
+import os
 
 app = FastAPI()
 
+# Get the script name dynamically and create a corresponding JSON file name
+script_name = os.path.splitext(os.path.basename(__file__))[0]  # Get the script name without extension
+json_file_name = f"{script_name}.json"  # Create the JSON file name (e.g., employee_get.json)
+
 # Load the JSON file (employee data)
-with open('employee_data.json', 'r') as file:
-    employee_data = json.load(file)
+try:
+    with open(json_file_name, 'r') as file:
+        employee_data = json.load(file)
+except FileNotFoundError:
+    employee_data = []  # Initialize an empty list if the JSON file doesn't exist
 
 # Token URL and payload for authentication
 token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
@@ -40,22 +48,32 @@ def get_auth_token():
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-@app.get("/organization/employee")
-def get_employee(employee_id: str):
-    # Authenticate and get the token
-    token = get_auth_token()
+# Define the data model for GET requests
+class EmployeeGetModel(BaseModel):
+    data: dict
 
-    # If token is available, proceed with retrieving employee data
-    if token:
-        # Filter the data based on employee ID
-        employee = next((emp for emp in employee_data if emp["EmployeeID"] == employee_id), None)
-        
-        if employee:
-            return employee
-        else:
-            raise HTTPException(status_code=404, detail="Employee not found")
+# Endpoint to retrieve employee information
+@app.get("/organization/employee", response_model=EmployeeGetModel)
+def get_employee(employee_id: str, authorization: str = Header(None)):
+    if authorization is None:
+        authorization = get_auth_token()
+
+    # External API URL to fetch employee information
+    url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee?$filter=EmployeeID eq '{employee_id}'"
+    headers = {"Authorization": f"Bearer {authorization}"}
+
+    # Make a request to the external API to fetch employee data
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        return EmployeeGetModel(data=data)
+    elif response.status_code == 400:
+        raise HTTPException(status_code=400, detail="Bad Request")
+    elif response.status_code == 500:
+        raise HTTPException(status_code=500, detail="Internal Server Error")
     else:
-        raise HTTPException(status_code=401, detail="Authentication token not found")
+        raise HTTPException(status_code=response.status_code, detail="An error occurred")
 
 # Run the app
 if __name__ == "__main__":
