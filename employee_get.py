@@ -4,6 +4,8 @@ from fastapi import FastAPI, HTTPException, Header
 import requests
 import json
 import os
+from pydantic import BaseModel
+from typing import Dict
 
 app = FastAPI()
 
@@ -48,9 +50,18 @@ def get_auth_token():
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Define the data model for GET requests
+# Define the data model for the employee response
 class EmployeeGetModel(BaseModel):
-    data: dict
+    EmployeeID: str
+    Name: str
+    BranchID: str
+    CurrencyID: str
+    DateOfBirth: str
+    DepartmentID: str
+    EmployeeClassID: str
+    PaymentMethod: str
+    ReportsToID: str
+    Status: bool
 
 # Endpoint to retrieve employee information
 @app.get("/organization/employee", response_model=EmployeeGetModel)
@@ -67,7 +78,7 @@ def get_employee(employee_id: str, authorization: str = Header(None)):
 
     if response.status_code == 200:
         data = response.json()
-        return EmployeeGetModel(data=data)
+        return EmployeeGetModel(**data)  # Unpack the JSON response into the model
     elif response.status_code == 400:
         raise HTTPException(status_code=400, detail="Bad Request")
     elif response.status_code == 500:
