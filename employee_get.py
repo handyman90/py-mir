@@ -92,7 +92,7 @@ class EmployeeData(BaseModel):
     rowNumber: int
     note: Optional[str]
     BranchID: Dict
-    Contact: Dict  # Adjust this based on the exact structure of Contact
+    Contact: Dict  # The Contact field will need to match the structure returned
     CurrencyID: Dict
     DateOfBirth: Dict
     DepartmentID: Dict
@@ -164,7 +164,16 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
 
         if response.status_code == 200:
             employee_data = response.json()
+
+            # Check if the response is a list or a single dictionary
+            if isinstance(employee_data, list) and employee_data:
+                # Assuming the first element is the relevant employee data
+                employee_data = employee_data[0]
+            elif not isinstance(employee_data, dict):
+                raise HTTPException(status_code=500, detail="Unexpected response format")
+
             return EmployeeData(**employee_data)  # Return the employee data as a response
+        
         elif response.status_code == 400:
             raise HTTPException(status_code=400, detail="Bad Request")
         elif response.status_code == 401:
@@ -175,6 +184,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
             raise HTTPException(status_code=500, detail="Internal Server Error")
         else:
             raise HTTPException(status_code=response.status_code, detail="An error occurred")
+    
     except Exception as e:
         print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
