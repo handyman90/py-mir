@@ -65,45 +65,45 @@ class EmploymentHistory(BaseModel):
     custom: Dict
 
 class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: CustomField
-    UsrPlacementID: CustomField
-    CalendarID: CustomField
-    HoursValidation: CustomField
-    SalesPersonID: CustomField
-    UserID: CustomField
-    AllowOverrideCury: CustomField
-    CuryRateTypeID: CustomField
-    AllowOverrideRate: CustomField
-    LabourItemID: CustomField
-    UnionID: CustomField
-    RouteEmails: CustomField
-    TimeCardRequired: CustomField
-    NoteID: CustomField
-    PrepaymentAcctID: CustomField
-    PrepaymentSubID: CustomField
-    ExpenseAcctID: CustomField
-    ExpenseSubID: CustomField
-    SalesAcctID: CustomField
-    SalesSubID: CustomField
-    TermsID: CustomField
+    AcctReferenceNbr: Optional[CustomField]
+    UsrPlacementID: Optional[CustomField]
+    CalendarID: Optional[CustomField]
+    HoursValidation: Optional[CustomField]
+    SalesPersonID: Optional[CustomField]
+    UserID: Optional[CustomField]
+    AllowOverrideCury: Optional[CustomField]
+    CuryRateTypeID: Optional[CustomField]
+    AllowOverrideRate: Optional[CustomField]
+    LabourItemID: Optional[CustomField]
+    UnionID: Optional[CustomField]
+    RouteEmails: Optional[CustomField]
+    TimeCardRequired: Optional[CustomField]
+    NoteID: Optional[CustomField]
+    PrepaymentAcctID: Optional[CustomField]
+    PrepaymentSubID: Optional[CustomField]
+    ExpenseAcctID: Optional[CustomField]
+    ExpenseSubID: Optional[CustomField]
+    SalesAcctID: Optional[CustomField]
+    SalesSubID: Optional[CustomField]
+    TermsID: Optional[CustomField]
 
 class EmployeeData(BaseModel):
     id: str
     rowNumber: int
     note: Optional[str]
     BranchID: Dict
-    Contact: Dict  # Adjust this based on the exact structure of Contact
+    Contact: Optional[Dict]  # Adjusted to be optional
     CurrencyID: Dict
-    DateOfBirth: Dict
-    DepartmentID: Dict
-    EmployeeClassID: Dict
-    EmployeeCost: List[Dict]
-    EmployeeID: Dict
-    EmploymentHistory: List[EmploymentHistory]
+    DateOfBirth: Optional[Dict]  # Adjusted to be optional
+    DepartmentID: Optional[Dict]  # Adjusted to be optional
+    EmployeeClassID: Optional[Dict]  # Adjusted to be optional
+    EmployeeCost: Optional[List[Dict]]  # Made optional to avoid missing required fields
+    EmployeeID: Optional[Dict]  # Made optional
+    EmploymentHistory: Optional[List[EmploymentHistory]]  # Made optional
     Name: Dict
-    PaymentMethod: Dict
-    ReportsToID: Dict
-    Status: Dict
+    PaymentMethod: Optional[Dict]  # Made optional
+    ReportsToID: Optional[Dict]  # Made optional
+    Status: Optional[Dict]  # Made optional
     custom: CurrentEmployee
 
 # Define a model for the token response
@@ -172,7 +172,8 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
             elif not isinstance(employee_data, dict):
                 raise HTTPException(status_code=500, detail="Unexpected response format")
 
-            return EmployeeData(**employee_data)  # Return the employee data as a response
+            # Create EmployeeData while ignoring missing required fields
+            return EmployeeData(**{k: v for k, v in employee_data.items() if v is not None})  # Only include non-None fields
         
         elif response.status_code == 400:
             raise HTTPException(status_code=400, detail="Bad Request")
@@ -186,8 +187,13 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
             raise HTTPException(status_code=response.status_code, detail="An error occurred")
 
     except ValidationError as e:
-        # Handle missing fields gracefully
-        raise HTTPException(status_code=422, detail=f"Validation error: {e.errors()}")
+        # Handle validation errors and provide detailed feedback
+        missing_fields = [error['loc'][-1] for error in e.errors() if error['type'] == 'value_error.missing']
+        if missing_fields:
+            detail_message = f"Missing required fields: {', '.join(missing_fields)}"
+            raise HTTPException(status_code=422, detail=detail_message)
+        raise HTTPException(status_code=422, detail="Validation error")
+
     except Exception as e:
         print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
         raise HTTPException(status_code=500, detail="An unexpected error occurred")
