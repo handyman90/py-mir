@@ -55,7 +55,7 @@ class Contact(BaseModel):
     id: Optional[str] = None
     rowNumber: Optional[int] = None
     note: Optional[str] = None
-    Email: Optional[EmailStr] = None
+    Email: Optional[str] = None  # Change from EmailStr to str
     FirstName: Optional[str] = None
     LastName: Optional[str] = None
     Phone1: Optional[str] = None
