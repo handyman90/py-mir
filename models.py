@@ -15,7 +15,7 @@ class Employee(Base):
     contact_email = Column(String, nullable=True)  # Contact Email
     contact_first_name = Column(String, nullable=True)  # Contact FirstName
     contact_last_name = Column(String, nullable=True)  # Contact LastName
-    contact_phone1 = Column(String, nullable=True)  # Contact Phone1
+    contact_phone1 = Column(String, nullable=True)  # Contact Phone1s
     contact_phone2 = Column(String, nullable=True)  # Contact Phone2
     contact_title = Column(String, nullable=True)  # Contact Title
     currency_id = Column(String, nullable=True)  # CurrencyID
