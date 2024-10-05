@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from models import Employee, SessionLocal
 from datetime import datetime
@@ -38,45 +38,39 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic models
-class Address(BaseModel):
-    id: Optional[str] = None
-    rowNumber: Optional[int] = None
-    note: Optional[str] = None
-    AddressLine1: Optional[Dict[str, Any]] = None
-    AddressLine2: Optional[Dict[str, Any]] = None
-    City: Optional[Dict[str, Any]] = None
-    Country: Optional[Dict[str, Any]] = None
-    PostalCode: Optional[Dict[str, Any]] = None
-    State: Optional[Dict[str, Any]] = None
-    custom: Optional[Dict[str, Any]] = None
+# Pydantic models for response structure
+class Link(BaseModel):
+    self: Optional[str]  # Make it optional
+    files_put: Optional[str]  # Make it optional
 
-class Contact(BaseModel):
-    id: Optional[str] = None
-    rowNumber: Optional[int] = None
-    note: Optional[str] = None
-    Email: Optional[str] = None  # Using str for email
-    FirstName: Optional[str] = None
-    LastName: Optional[str] = None
-    Phone1: Optional[str] = None
-    Phone2: Optional[str] = None
-    Title: Optional[str] = None
-    Address: Optional[Address] = None
+class ValueField(BaseModel):
+    value: Optional[str]  # Make value optional
 
 class EmployeeResponse(BaseModel):
-    employee_id: str
-    row_number: Optional[int] = None
+    id: str
+    rowNumber: Optional[int] = None
     note: Optional[str] = None
-    branch_id: Optional[str] = None
-    contact: Contact
-    currency_id: Optional[str] = None
-    date_of_birth: Optional[str] = None  # Or use datetime if you want to handle it as a date
-    department_id: Optional[str] = None
-    employee_class_id: Optional[str] = None
-    employee_cost: Optional[List[Dict[str, Any]]] = None
-    employment_history: Optional[List[Dict[str, Any]]] = None
-    status: Optional[str] = None
-    custom_fields: Optional[Dict[str, Any]] = None
+    BranchID: ValueField
+    Calendar: ValueField
+    CashAccount: ValueField
+    CurrencyID: ValueField
+    DateOfBirth: ValueField
+    DepartmentID: ValueField
+    EmployeeClassID: ValueField
+    EmployeeID: ValueField
+    ExpenseAccount: ValueField
+    ExpenseSubaccount: ValueField
+    IdentityNumber: ValueField
+    IdentityType: ValueField
+    LastModifiedDateTime: ValueField
+    Name: ValueField
+    PaymentMethod: ValueField
+    ReportsToID: Optional[Dict[str, Any]] = None
+    SalesAccount: ValueField
+    SalesSubaccount: ValueField
+    Status: ValueField
+    custom: Optional[Dict[str, Any]] = None
+    _links: Link
 
 # Endpoint to retrieve and save employee information
 @app.get("/organization/employee", response_model=EmployeeResponse)
@@ -96,69 +90,89 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
             employee_data = response.json()
             employee_data = employee_data[0]  # Extract first record if it's a list
 
-            # Check if employee exists in the DB, otherwise add a new one
-            existing_employee = db.query(Employee).filter(Employee.employee_id == employee_id).first()
+            # Create or update employee record in the database
+            existing_employee = db.query(Employee).filter(Employee.employee_id == employee_data["EmployeeID"]["value"]).first()
             
             if existing_employee:
-                # Update existing employee with fields from employee_data
+                # Update existing employee
                 existing_employee.row_number = employee_data.get("rowNumber")
-                existing_employee.note = employee_data.get("note")
-                existing_employee.branch_id = employee_data.get("BranchID", {}).get("id")
-                existing_employee.contact_id = employee_data.get("Contact", {}).get("id")
-                existing_employee.currency_id = employee_data.get("CurrencyID", {}).get("id")
-                existing_employee.date_of_birth = datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00").split("+")[0])
-                existing_employee.department_id = employee_data.get("DepartmentID", {}).get("id")
-                existing_employee.employee_class_id = employee_data.get("EmployeeClassID", {}).get("id")
-                existing_employee.employee_cost = employee_data.get("EmployeeCost", [])
-                existing_employee.employment_history = employee_data.get("EmploymentHistory", [])
+                existing_employee.note = employee_data.get("note", "")
+                existing_employee.branch_id = employee_data.get("BranchID", {}).get("value")
+                existing_employee.calendar = employee_data.get("Calendar", {}).get("value")
+                existing_employee.cash_account = employee_data.get("CashAccount", {}).get("value")
+                existing_employee.currency_id = employee_data.get("CurrencyID", {}).get("value")
+                existing_employee.date_of_birth = datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00"))
+                existing_employee.department_id = employee_data.get("DepartmentID", {}).get("value")
+                existing_employee.employee_class_id = employee_data.get("EmployeeClassID", {}).get("value")
+                existing_employee.expense_account = employee_data.get("ExpenseAccount", {}).get("value")
+                existing_employee.expense_subaccount = employee_data.get("ExpenseSubaccount", {}).get("value")
+                existing_employee.identity_number = employee_data.get("IdentityNumber", {}).get("value")
+                existing_employee.identity_type = employee_data.get("IdentityType", {}).get("value")
+                existing_employee.last_modified_date_time = datetime.fromisoformat(employee_data.get("LastModifiedDateTime", {}).get("value").replace("Z", "+00:00"))
+                existing_employee.name = employee_data.get("Name", {}).get("value")
+                existing_employee.payment_method = employee_data.get("PaymentMethod", {}).get("value")
+                existing_employee.reports_to_id = employee_data.get("ReportsToID", {}).get("value")  # Assuming ReportsToID is also a value field
+                existing_employee.sales_account = employee_data.get("SalesAccount", {}).get("value")
+                existing_employee.sales_subaccount = employee_data.get("SalesSubaccount", {}).get("value")
                 existing_employee.status = employee_data.get("Status", {}).get("value")
-                existing_employee.custom_fields = employee_data.get("custom")
+                existing_employee.custom_fields = employee_data.get("custom", {})
+                existing_employee.links = employee_data.get("_links", {})
 
             else:
                 # Create a new employee record
                 employee = Employee(
                     employee_id=employee_data.get("EmployeeID", {}).get("value"),
                     row_number=employee_data.get("rowNumber"),
-                    note=employee_data.get("note"),
-                    branch_id=employee_data.get("BranchID", {}).get("id"),
-                    contact_id=employee_data.get("Contact", {}).get("id"),
-                    currency_id=employee_data.get("CurrencyID", {}).get("id"),
-                    date_of_birth=datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00").split("+")[0]),
-                    department_id=employee_data.get("DepartmentID", {}).get("id"),
-                    employee_class_id=employee_data.get("EmployeeClassID", {}).get("id"),
-                    employee_cost=employee_data.get("EmployeeCost", []),
-                    employment_history=employee_data.get("EmploymentHistory", []),
+                    note=employee_data.get("note", ""),
+                    branch_id=employee_data.get("BranchID", {}).get("value"),
+                    calendar=employee_data.get("Calendar", {}).get("value"),
+                    cash_account=employee_data.get("CashAccount", {}).get("value"),
+                    currency_id=employee_data.get("CurrencyID", {}).get("value"),
+                    date_of_birth=datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00")),
+                    department_id=employee_data.get("DepartmentID", {}).get("value"),
+                    employee_class_id=employee_data.get("EmployeeClassID", {}).get("value"),
+                    expense_account=employee_data.get("ExpenseAccount", {}).get("value"),
+                    expense_subaccount=employee_data.get("ExpenseSubaccount", {}).get("value"),
+                    identity_number=employee_data.get("IdentityNumber", {}).get("value"),
+                    identity_type=employee_data.get("IdentityType", {}).get("value"),
+                    last_modified_date_time=datetime.fromisoformat(employee_data.get("LastModifiedDateTime", {}).get("value").replace("Z", "+00:00")),
+                    name=employee_data.get("Name", {}).get("value"),
+                    payment_method=employee_data.get("PaymentMethod", {}).get("value"),
+                    reports_to_id=employee_data.get("ReportsToID", {}).get("value"),
+                    sales_account=employee_data.get("SalesAccount", {}).get("value"),
+                    sales_subaccount=employee_data.get("SalesSubaccount", {}).get("value"),
                     status=employee_data.get("Status", {}).get("value"),
-                    custom_fields=employee_data.get("custom")
+                    custom_fields=employee_data.get("custom", {}),
+                    links=employee_data.get("_links", {})
                 )
                 db.add(employee)
 
             db.commit()
             return EmployeeResponse(
-                employee_id=existing_employee.employee_id if existing_employee else employee.employee_id,
-                row_number=existing_employee.row_number if existing_employee else employee.row_number,
+                id=existing_employee.employee_id if existing_employee else employee.employee_id,
+                rowNumber=existing_employee.row_number if existing_employee else employee.row_number,
                 note=existing_employee.note if existing_employee else employee.note,
-                branch_id=existing_employee.branch_id if existing_employee else employee.branch_id,
-                contact=Contact(
-                    id=existing_employee.contact_id if existing_employee else employee.contact_id,
-                    rowNumber=existing_employee.row_number if existing_employee else employee.row_number,
-                    note=existing_employee.note if existing_employee else employee.note,
-                    Email=existing_employee.contact_email if existing_employee else employee.contact_email,
-                    FirstName=existing_employee.contact_first_name if existing_employee else employee.contact_first_name,
-                    LastName=existing_employee.contact_last_name if existing_employee else employee.contact_last_name,
-                    Phone1=existing_employee.contact_phone1 if existing_employee else employee.contact_phone1,
-                    Phone2=existing_employee.contact_phone2 if existing_employee else employee.contact_phone2,
-                    Title=existing_employee.contact_title if existing_employee else employee.contact_title,
-                    Address=None  # Assuming you'll handle addresses separately
-                ),
-                currency_id=existing_employee.currency_id if existing_employee else employee.currency_id,
-                date_of_birth=existing_employee.date_of_birth.strftime("%Y-%m-%d") if existing_employee else employee.date_of_birth.strftime("%Y-%m-%d"),  # Convert to string
-                department_id=existing_employee.department_id if existing_employee else employee.department_id,
-                employee_class_id=existing_employee.employee_class_id if existing_employee else employee.employee_class_id,
-                employee_cost=existing_employee.employee_cost if existing_employee else employee.employee_cost,
-                employment_history=existing_employee.employment_history if existing_employee else employee.employment_history,
-                status=existing_employee.status if existing_employee else employee.status,
-                custom_fields=existing_employee.custom_fields if existing_employee else employee.custom_fields,
+                BranchID={"value": existing_employee.branch_id} if existing_employee else {"value": employee.branch_id},
+                Calendar={"value": existing_employee.calendar} if existing_employee else {"value": employee.calendar},
+                CashAccount={"value": existing_employee.cash_account} if existing_employee else {"value": employee.cash_account},
+                CurrencyID={"value": existing_employee.currency_id} if existing_employee else {"value": employee.currency_id},
+                DateOfBirth={"value": existing_employee.date_of_birth.isoformat()} if existing_employee else {"value": employee.date_of_birth.isoformat()},
+                DepartmentID={"value": existing_employee.department_id} if existing_employee else {"value": employee.department_id},
+                EmployeeClassID={"value": existing_employee.employee_class_id} if existing_employee else {"value": employee.employee_class_id},
+                EmployeeID={"value": existing_employee.employee_id} if existing_employee else {"value": employee.employee_id},
+                ExpenseAccount={"value": existing_employee.expense_account} if existing_employee else {"value": employee.expense_account},
+                ExpenseSubaccount={"value": existing_employee.expense_subaccount} if existing_employee else {"value": employee.expense_subaccount},
+                IdentityNumber={"value": existing_employee.identity_number} if existing_employee else {"value": employee.identity_number},
+                IdentityType={"value": existing_employee.identity_type} if existing_employee else {"value": employee.identity_type},
+                LastModifiedDateTime={"value": existing_employee.last_modified_date_time.isoformat()} if existing_employee else {"value": employee.last_modified_date_time.isoformat()},
+                Name={"value": existing_employee.name} if existing_employee else {"value": employee.name},
+                PaymentMethod={"value": existing_employee.payment_method} if existing_employee else {"value": employee.payment_method},
+                ReportsToID={},
+                SalesAccount={"value": existing_employee.sales_account} if existing_employee else {"value": employee.sales_account},
+                SalesSubaccount={"value": existing_employee.sales_subaccount} if existing_employee else {"value": employee.sales_subaccount},
+                Status={"value": existing_employee.status} if existing_employee else {"value": employee.status},
+                custom={},
+                _links=existing_employee.links if existing_employee else employee.links
             )
 
         else:
