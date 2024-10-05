@@ -28,7 +28,7 @@ class Employee(Base):
     custom_fields = Column(JSON, nullable=True)  # Store custom fields as JSON
 
 # Database connection string (update with your own credentials)
-SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://username:password@server/dbname?driver=ODBC+Driver+17+for+SQL+Server"
+SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa@1234@ZARIF_PC/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
 
 # Create the database engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
