@@ -29,80 +29,6 @@ def get_auth_token() -> dict:
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Define Pydantic models according to the expected JSON structure
-class CustomField(BaseModel):
-    type: Optional[str]  
-    value: Optional[str]  
-
-class Address(BaseModel):
-    id: Optional[str]  
-    rowNumber: Optional[int]  
-    note: Optional[str]  
-    AddressLine1: Optional[Dict]  
-    AddressLine2: Optional[Dict]  
-    City: Optional[Dict]  
-    Country: Optional[Dict]  
-    PostalCode: Optional[Dict]  
-    State: Optional[Dict]  
-    custom: Optional[Dict]  
-
-class EmploymentHistory(BaseModel):
-    id: Optional[str]  
-    rowNumber: Optional[int]  
-    note: Optional[str]  
-    Active: Optional[Dict]  
-    EndDate: Optional[Dict]  
-    LineNbr: Optional[Dict]  
-    PositionID: Optional[Dict]  
-    RehireEligible: Optional[Dict]  
-    StartDate: Optional[Dict]  
-    StartReason: Optional[Dict]  
-    Terminated: Optional[Dict]  
-    TerminationReason: Optional[Dict]  
-    custom: Optional[Dict]  
-
-class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: Optional[CustomField]  
-    UsrPlacementID: Optional[CustomField]  
-    CalendarID: Optional[CustomField]  
-    HoursValidation: Optional[CustomField]  
-    SalesPersonID: Optional[CustomField]  
-    UserID: Optional[CustomField]  
-    AllowOverrideCury: Optional[CustomField]  
-    CuryRateTypeID: Optional[CustomField]  
-    AllowOverrideRate: Optional[CustomField]  
-    LabourItemID: Optional[CustomField]  
-    UnionID: Optional[CustomField]  
-    RouteEmails: Optional[CustomField]  
-    TimeCardRequired: Optional[CustomField]  
-    NoteID: Optional[CustomField]  
-    PrepaymentAcctID: Optional[CustomField]  
-    PrepaymentSubID: Optional[CustomField]  
-    ExpenseAcctID: Optional[CustomField]  
-    ExpenseSubID: Optional[CustomField]  
-    SalesAcctID: Optional[CustomField]  
-    SalesSubID: Optional[CustomField]  
-    TermsID: Optional[CustomField]  
-
-class EmployeeData(BaseModel):
-    id: Optional[str]  
-    rowNumber: Optional[int]  
-    note: Optional[str]  
-    BranchID: Optional[Dict]  
-    Contact: Optional[Dict]  
-    CurrencyID: Optional[Dict]  
-    DateOfBirth: Optional[Dict]  
-    DepartmentID: Optional[Dict]  
-    EmployeeClassID: Optional[Dict]  
-    EmployeeCost: Optional[List[Dict]]  
-    EmployeeID: Optional[Dict]  
-    EmploymentHistory: Optional[List[EmploymentHistory]]  
-    Name: Optional[Dict]  
-    PaymentMethod: Optional[Dict]  
-    ReportsToID: Optional[Dict]  
-    Status: Optional[Dict]  
-    custom: Optional[CurrentEmployee]  
-
 # Dependency to get a DB session
 def get_db():
     db = SessionLocal()
@@ -111,22 +37,8 @@ def get_db():
     finally:
         db.close()
 
-# Endpoint to test the token
-@app.get("/test-token", response_model=dict)
-def test_token():
-    try:
-        token_response = get_auth_token()  # Get the complete token response
-        return {
-            "access_token": token_response.get("access_token"),
-            "token_type": token_response.get("token_type"),
-            "expires_in": token_response.get("expires_in"),
-            "scope": token_response.get("scope")
-        }
-    except HTTPException as e:
-        raise HTTPException(status_code=e.status_code, detail=e.detail)
-
 # Endpoint to retrieve and save employee information
-@app.get("/organization/employee", response_model=EmployeeData)
+@app.get("/organization/employee")
 def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
@@ -159,7 +71,7 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                 existing_employee.employee_cost = employee_data.get("EmployeeCost", [])
                 existing_employee.employment_history = employee_data.get("EmploymentHistory", [])
                 existing_employee.status = employee_data.get("Status", {}).get("value")
-                existing_employee.custom = employee_data.get("custom")  # Storing entire custom field
+                existing_employee.custom_fields = employee_data.get("custom")  # Storing entire custom field
 
             else:
                 # Create a new employee record
@@ -176,30 +88,26 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                     employee_cost=employee_data.get("EmployeeCost", []),
                     employment_history=employee_data.get("EmploymentHistory", []),
                     status=employee_data.get("Status", {}).get("value"),
-                    custom=employee_data.get("custom")  # Storing entire custom field
+                    custom_fields=employee_data.get("custom")  # Storing entire custom field
                 )
                 db.add(employee)
 
             db.commit()
-            return EmployeeData(
-                id=employee.employee_id,
-                rowNumber=employee.row_number,
-                note=employee.note,
-                BranchID={"id": existing_employee.branch_id},  # Assuming you return the ID in a dict format
-                Contact={"id": existing_employee.contact_id},  # Return the contact in the same way
-                CurrencyID={"id": existing_employee.currency_id},
-                DateOfBirth={"value": existing_employee.date_of_birth},
-                DepartmentID={"id": existing_employee.department_id},
-                EmployeeClassID={"id": existing_employee.employee_class_id},
-                EmployeeCost=existing_employee.employee_cost,
-                EmployeeID={"value": existing_employee.employee_id},
-                EmploymentHistory=existing_employee.employment_history,
-                Name={},
-                PaymentMethod={},
-                ReportsToID={},
-                Status={"value": existing_employee.status},
-                custom=existing_employee.custom
-            )
+            return {
+                "employee_id": existing_employee.employee_id,
+                "row_number": existing_employee.row_number,
+                "note": existing_employee.note,
+                "branch_id": existing_employee.branch_id,
+                "contact_id": existing_employee.contact_id,
+                "currency_id": existing_employee.currency_id,
+                "date_of_birth": existing_employee.date_of_birth,
+                "department_id": existing_employee.department_id,
+                "employee_class_id": existing_employee.employee_class_id,
+                "employee_cost": existing_employee.employee_cost,
+                "employment_history": existing_employee.employment_history,
+                "status": existing_employee.status,
+                "custom_fields": existing_employee.custom_fields,
+            }
 
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
