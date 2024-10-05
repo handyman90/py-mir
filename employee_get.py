@@ -1,9 +1,9 @@
-# employee_get.py
-
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
-from pydantic import BaseModel, ValidationError
-from typing import List, Dict, Optional
+from pydantic import BaseModel
+from typing import Optional, List, Dict
+from sqlalchemy.orm import Session
+from models import Employee, SessionLocal
 
 app = FastAPI()
 
@@ -21,100 +21,98 @@ def get_auth_token() -> dict:
         "password": "apiuser"
     }
 
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        return response.json()  # Return the entire token response
+        return response.json()
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Define the data models for the expected response structure
+# Define Pydantic models according to the expected JSON structure
 class CustomField(BaseModel):
-    type: Optional[str]  # Made optional
-    value: Optional[str]  # Made optional
+    type: Optional[str]  
+    value: Optional[str]  
 
 class Address(BaseModel):
-    id: Optional[str]  # Made optional
-    rowNumber: Optional[int]  # Made optional
-    note: Optional[str]  # Made optional
-    AddressLine1: Optional[Dict]  # Made optional
-    AddressLine2: Optional[Dict]  # Made optional
-    City: Optional[Dict]  # Made optional
-    Country: Optional[Dict]  # Made optional
-    PostalCode: Optional[Dict]  # Made optional
-    State: Optional[Dict]  # Made optional
-    custom: Optional[Dict]  # Made optional
+    id: Optional[str]  
+    rowNumber: Optional[int]  
+    note: Optional[str]  
+    AddressLine1: Optional[Dict]  
+    AddressLine2: Optional[Dict]  
+    City: Optional[Dict]  
+    Country: Optional[Dict]  
+    PostalCode: Optional[Dict]  
+    State: Optional[Dict]  
+    custom: Optional[Dict]  
 
 class EmploymentHistory(BaseModel):
-    id: Optional[str]  # Made optional
-    rowNumber: Optional[int]  # Made optional
-    note: Optional[str]  # Made optional
-    Active: Optional[Dict]  # Made optional
-    EndDate: Optional[Dict]  # Made optional
-    LineNbr: Optional[Dict]  # Made optional
-    PositionID: Optional[Dict]  # Made optional
-    RehireEligible: Optional[Dict]  # Made optional
-    StartDate: Optional[Dict]  # Made optional
-    StartReason: Optional[Dict]  # Made optional
-    Terminated: Optional[Dict]  # Made optional
-    TerminationReason: Optional[Dict]  # Made optional
-    custom: Optional[Dict]  # Made optional
+    id: Optional[str]  
+    rowNumber: Optional[int]  
+    note: Optional[str]  
+    Active: Optional[Dict]  
+    EndDate: Optional[Dict]  
+    LineNbr: Optional[Dict]  
+    PositionID: Optional[Dict]  
+    RehireEligible: Optional[Dict]  
+    StartDate: Optional[Dict]  
+    StartReason: Optional[Dict]  
+    Terminated: Optional[Dict]  
+    TerminationReason: Optional[Dict]  
+    custom: Optional[Dict]  
 
 class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: Optional[CustomField]  # Made optional
-    UsrPlacementID: Optional[CustomField]  # Made optional
-    CalendarID: Optional[CustomField]  # Made optional
-    HoursValidation: Optional[CustomField]  # Made optional
-    SalesPersonID: Optional[CustomField]  # Made optional
-    UserID: Optional[CustomField]  # Made optional
-    AllowOverrideCury: Optional[CustomField]  # Made optional
-    CuryRateTypeID: Optional[CustomField]  # Made optional
-    AllowOverrideRate: Optional[CustomField]  # Made optional
-    LabourItemID: Optional[CustomField]  # Made optional
-    UnionID: Optional[CustomField]  # Made optional
-    RouteEmails: Optional[CustomField]  # Made optional
-    TimeCardRequired: Optional[CustomField]  # Made optional
-    NoteID: Optional[CustomField]  # Made optional
-    PrepaymentAcctID: Optional[CustomField]  # Made optional
-    PrepaymentSubID: Optional[CustomField]  # Made optional
-    ExpenseAcctID: Optional[CustomField]  # Made optional
-    ExpenseSubID: Optional[CustomField]  # Made optional
-    SalesAcctID: Optional[CustomField]  # Made optional
-    SalesSubID: Optional[CustomField]  # Made optional
-    TermsID: Optional[CustomField]  # Made optional
+    AcctReferenceNbr: Optional[CustomField]  
+    UsrPlacementID: Optional[CustomField]  
+    CalendarID: Optional[CustomField]  
+    HoursValidation: Optional[CustomField]  
+    SalesPersonID: Optional[CustomField]  
+    UserID: Optional[CustomField]  
+    AllowOverrideCury: Optional[CustomField]  
+    CuryRateTypeID: Optional[CustomField]  
+    AllowOverrideRate: Optional[CustomField]  
+    LabourItemID: Optional[CustomField]  
+    UnionID: Optional[CustomField]  
+    RouteEmails: Optional[CustomField]  
+    TimeCardRequired: Optional[CustomField]  
+    NoteID: Optional[CustomField]  
+    PrepaymentAcctID: Optional[CustomField]  
+    PrepaymentSubID: Optional[CustomField]  
+    ExpenseAcctID: Optional[CustomField]  
+    ExpenseSubID: Optional[CustomField]  
+    SalesAcctID: Optional[CustomField]  
+    SalesSubID: Optional[CustomField]  
+    TermsID: Optional[CustomField]  
 
 class EmployeeData(BaseModel):
-    id: Optional[str]  # Made optional
-    rowNumber: Optional[int]  # Made optional
-    note: Optional[str]  # Made optional
-    BranchID: Optional[Dict]  # Made optional
-    Contact: Optional[Dict]  # Made optional
-    CurrencyID: Optional[Dict]  # Made optional
-    DateOfBirth: Optional[Dict]  # Made optional
-    DepartmentID: Optional[Dict]  # Made optional
-    EmployeeClassID: Optional[Dict]  # Made optional
-    EmployeeCost: Optional[List[Dict]]  # Made optional
-    EmployeeID: Optional[Dict]  # Made optional
-    EmploymentHistory: Optional[List[EmploymentHistory]]  # Made optional
-    Name: Optional[Dict]  # Made optional
-    PaymentMethod: Optional[Dict]  # Made optional
-    ReportsToID: Optional[Dict]  # Made optional
-    Status: Optional[Dict]  # Made optional
-    custom: Optional[CurrentEmployee]  # Made optional
+    id: Optional[str]  
+    rowNumber: Optional[int]  
+    note: Optional[str]  
+    BranchID: Optional[Dict]  
+    Contact: Optional[Dict]  
+    CurrencyID: Optional[Dict]  
+    DateOfBirth: Optional[Dict]  
+    DepartmentID: Optional[Dict]  
+    EmployeeClassID: Optional[Dict]  
+    EmployeeCost: Optional[List[Dict]]  
+    EmployeeID: Optional[Dict]  
+    EmploymentHistory: Optional[List[EmploymentHistory]]  
+    Name: Optional[Dict]  
+    PaymentMethod: Optional[Dict]  
+    ReportsToID: Optional[Dict]  
+    Status: Optional[Dict]  
+    custom: Optional[CurrentEmployee]  
 
-# Define a model for the token response
-class TokenResponseModel(BaseModel):
-    access_token: str
-    token_type: str
-    expires_in: int  # The expiration time in seconds
-    scope: str
+# Dependency to get a DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Endpoint to test the token
-@app.get("/test-token", response_model=TokenResponseModel)
+@app.get("/test-token", response_model=dict)
 def test_token():
     try:
         token_response = get_auth_token()  # Get the complete token response
@@ -127,76 +125,88 @@ def test_token():
     except HTTPException as e:
         raise HTTPException(status_code=e.status_code, detail=e.detail)
 
-# Endpoint to retrieve employee information
+# Endpoint to retrieve and save employee information
 @app.get("/organization/employee", response_model=EmployeeData)
-def get_employee(employee_id: str, authorization: Optional[str] = Header(None)):
+def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
-        # If no authorization token is provided in the header, get a new token
         if authorization is None:
-            token_response = get_auth_token()  # Retrieve a new token
-            authorization = token_response.get("access_token")  # Use the access_token
+            token_response = get_auth_token()
+            authorization = token_response.get("access_token")
 
-        # External API URL to fetch employee information
         url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee"
+        headers = {"Authorization": f"Bearer {authorization}"}
+        params = {"$filter": f"EmployeeID eq '{employee_id}'"}
 
-        # Prepare the payload for the GET request
-        payload = {
-            "$filter": f"EmployeeID eq '{employee_id}'"
-        }
-        
-        # Include the authorization token in the headers
-        headers = {
-            "Authorization": f"Bearer {authorization}",  # Use the retrieved token
-            'Content-Type': 'application/json'  # Setting content type
-        }
-
-        # Log the request URL and headers for debugging
-        print(f"Requesting URL: {url}")
-        print(f"Request Headers: {headers}")
-        print(f"Request Payload: {payload}")
-
-        # Fetch employee data from the external API
-        response = requests.get(url, headers=headers, params=payload)  # Pass payload as query parameters
-
-        # Log the response status code and content
-        print(f"Response Status Code: {response.status_code}")
-        print(f"Response Content: {response.text}")
+        response = requests.get(url, headers=headers, params=params)
 
         if response.status_code == 200:
             employee_data = response.json()
+            employee_data = employee_data[0]  # Extract first record if it's a list
 
-            # Check if the response is a list or a single dictionary
-            if isinstance(employee_data, list) and employee_data:
-                # Assuming the first element is the relevant employee data
-                employee_data = employee_data[0]
-            elif not isinstance(employee_data, dict):
-                raise HTTPException(status_code=500, detail="Unexpected response format")
+            # Check if employee exists in the DB, otherwise add a new one
+            existing_employee = db.query(Employee).filter(Employee.employee_id == employee_id).first()
+            
+            if existing_employee:
+                # Update existing employee with fields from employee_data
+                existing_employee.row_number = employee_data.get("rowNumber")
+                existing_employee.note = employee_data.get("note")
+                existing_employee.branch_id = employee_data.get("BranchID", {}).get("id")  # Assuming BranchID contains an ID
+                existing_employee.contact_id = employee_data.get("Contact", {}).get("id")  # Assuming Contact has its own ID
+                existing_employee.currency_id = employee_data.get("CurrencyID", {}).get("id")  # Assuming CurrencyID has its own ID
+                existing_employee.date_of_birth = employee_data.get("DateOfBirth", {}).get("value")
+                existing_employee.department_id = employee_data.get("DepartmentID", {}).get("id")  # Assuming DepartmentID has its own ID
+                existing_employee.employee_class_id = employee_data.get("EmployeeClassID", {}).get("id")  # Assuming EmployeeClassID has its own ID
+                existing_employee.employee_cost = employee_data.get("EmployeeCost", [])
+                existing_employee.employment_history = employee_data.get("EmploymentHistory", [])
+                existing_employee.status = employee_data.get("Status", {}).get("value")
+                existing_employee.custom = employee_data.get("custom")  # Storing entire custom field
 
-            # Create EmployeeData while ignoring missing required fields
-            return EmployeeData(**{k: v for k, v in employee_data.items() if v is not None})  # Only include non-None fields
-        
-        elif response.status_code == 400:
-            raise HTTPException(status_code=400, detail="Bad Request")
-        elif response.status_code == 401:
-            raise HTTPException(status_code=401, detail="Unauthorized - Please check your access token")
-        elif response.status_code == 403:
-            raise HTTPException(status_code=403, detail="Forbidden - Access denied")
-        elif response.status_code == 500:
-            raise HTTPException(status_code=500, detail="Internal Server Error")
+            else:
+                # Create a new employee record
+                employee = Employee(
+                    employee_id=employee_data.get("EmployeeID", {}).get("value"),
+                    row_number=employee_data.get("rowNumber"),
+                    note=employee_data.get("note"),
+                    branch_id=employee_data.get("BranchID", {}).get("id"),
+                    contact_id=employee_data.get("Contact", {}).get("id"),
+                    currency_id=employee_data.get("CurrencyID", {}).get("id"),
+                    date_of_birth=employee_data.get("DateOfBirth", {}).get("value"),
+                    department_id=employee_data.get("DepartmentID", {}).get("id"),
+                    employee_class_id=employee_data.get("EmployeeClassID", {}).get("id"),
+                    employee_cost=employee_data.get("EmployeeCost", []),
+                    employment_history=employee_data.get("EmploymentHistory", []),
+                    status=employee_data.get("Status", {}).get("value"),
+                    custom=employee_data.get("custom")  # Storing entire custom field
+                )
+                db.add(employee)
+
+            db.commit()
+            return EmployeeData(
+                id=employee.employee_id,
+                rowNumber=employee.row_number,
+                note=employee.note,
+                BranchID={"id": existing_employee.branch_id},  # Assuming you return the ID in a dict format
+                Contact={"id": existing_employee.contact_id},  # Return the contact in the same way
+                CurrencyID={"id": existing_employee.currency_id},
+                DateOfBirth={"value": existing_employee.date_of_birth},
+                DepartmentID={"id": existing_employee.department_id},
+                EmployeeClassID={"id": existing_employee.employee_class_id},
+                EmployeeCost=existing_employee.employee_cost,
+                EmployeeID={"value": existing_employee.employee_id},
+                EmploymentHistory=existing_employee.employment_history,
+                Name={},
+                PaymentMethod={},
+                ReportsToID={},
+                Status={"value": existing_employee.status},
+                custom=existing_employee.custom
+            )
+
         else:
-            raise HTTPException(status_code=response.status_code, detail="An error occurred")
-
-    except ValidationError as e:
-        # Handle validation errors and provide detailed feedback
-        missing_fields = [error['loc'][-1] for error in e.errors() if error['type'] == 'value_error.missing']
-        if missing_fields:
-            detail_message = f"Missing required fields: {', '.join(missing_fields)}"
-            raise HTTPException(status_code=422, detail=detail_message)
-        raise HTTPException(status_code=422, detail="Validation error")
+            raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
 
     except Exception as e:
-        print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+        print(f"Exception occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Run the app
 if __name__ == "__main__":
