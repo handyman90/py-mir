@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
-from pydantic import BaseModel
-from typing import Optional, List, Dict
+from pydantic import BaseModel, EmailStr
+from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from models import Employee, SessionLocal
+from datetime import datetime
 
 app = FastAPI()
 
@@ -37,8 +38,48 @@ def get_db():
     finally:
         db.close()
 
+# Pydantic models
+class Address(BaseModel):
+    id: Optional[str] = None
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
+    AddressLine1: Optional[Dict[str, Any]] = None
+    AddressLine2: Optional[Dict[str, Any]] = None
+    City: Optional[Dict[str, Any]] = None
+    Country: Optional[Dict[str, Any]] = None
+    PostalCode: Optional[Dict[str, Any]] = None
+    State: Optional[Dict[str, Any]] = None
+    custom: Optional[Dict[str, Any]] = None
+
+class Contact(BaseModel):
+    id: Optional[str] = None
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
+    Email: Optional[EmailStr] = None
+    FirstName: Optional[str] = None
+    LastName: Optional[str] = None
+    Phone1: Optional[str] = None
+    Phone2: Optional[str] = None
+    Title: Optional[str] = None
+    Address: Optional[Address] = None
+
+class EmployeeResponse(BaseModel):
+    employee_id: str
+    row_number: Optional[int] = None
+    note: Optional[str] = None
+    branch_id: Optional[str] = None
+    contact: Contact
+    currency_id: Optional[str] = None
+    date_of_birth: Optional[str] = None  # Or use datetime if you want to handle it as a date
+    department_id: Optional[str] = None
+    employee_class_id: Optional[str] = None
+    employee_cost: Optional[List[Dict[str, Any]]] = None
+    employment_history: Optional[List[Dict[str, Any]]] = None
+    status: Optional[str] = None
+    custom_fields: Optional[Dict[str, Any]] = None
+
 # Endpoint to retrieve and save employee information
-@app.get("/organization/employee")
+@app.get("/organization/employee", response_model=EmployeeResponse)
 def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
@@ -62,16 +103,16 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                 # Update existing employee with fields from employee_data
                 existing_employee.row_number = employee_data.get("rowNumber")
                 existing_employee.note = employee_data.get("note")
-                existing_employee.branch_id = employee_data.get("BranchID", {}).get("id")  # Assuming BranchID contains an ID
-                existing_employee.contact_id = employee_data.get("Contact", {}).get("id")  # Assuming Contact has its own ID
-                existing_employee.currency_id = employee_data.get("CurrencyID", {}).get("id")  # Assuming CurrencyID has its own ID
-                existing_employee.date_of_birth = employee_data.get("DateOfBirth", {}).get("value")
-                existing_employee.department_id = employee_data.get("DepartmentID", {}).get("id")  # Assuming DepartmentID has its own ID
-                existing_employee.employee_class_id = employee_data.get("EmployeeClassID", {}).get("id")  # Assuming EmployeeClassID has its own ID
+                existing_employee.branch_id = employee_data.get("BranchID", {}).get("id")
+                existing_employee.contact_id = employee_data.get("Contact", {}).get("id")
+                existing_employee.currency_id = employee_data.get("CurrencyID", {}).get("id")
+                existing_employee.date_of_birth = datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00").split("+")[0])
+                existing_employee.department_id = employee_data.get("DepartmentID", {}).get("id")
+                existing_employee.employee_class_id = employee_data.get("EmployeeClassID", {}).get("id")
                 existing_employee.employee_cost = employee_data.get("EmployeeCost", [])
                 existing_employee.employment_history = employee_data.get("EmploymentHistory", [])
                 existing_employee.status = employee_data.get("Status", {}).get("value")
-                existing_employee.custom_fields = employee_data.get("custom")  # Storing entire custom field
+                existing_employee.custom_fields = employee_data.get("custom")
 
             else:
                 # Create a new employee record
@@ -82,32 +123,43 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                     branch_id=employee_data.get("BranchID", {}).get("id"),
                     contact_id=employee_data.get("Contact", {}).get("id"),
                     currency_id=employee_data.get("CurrencyID", {}).get("id"),
-                    date_of_birth=employee_data.get("DateOfBirth", {}).get("value"),
+                    date_of_birth=datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00").split("+")[0]),
                     department_id=employee_data.get("DepartmentID", {}).get("id"),
                     employee_class_id=employee_data.get("EmployeeClassID", {}).get("id"),
                     employee_cost=employee_data.get("EmployeeCost", []),
                     employment_history=employee_data.get("EmploymentHistory", []),
                     status=employee_data.get("Status", {}).get("value"),
-                    custom_fields=employee_data.get("custom")  # Storing entire custom field
+                    custom_fields=employee_data.get("custom")
                 )
                 db.add(employee)
 
             db.commit()
-            return {
-                "employee_id": existing_employee.employee_id,
-                "row_number": existing_employee.row_number,
-                "note": existing_employee.note,
-                "branch_id": existing_employee.branch_id,
-                "contact_id": existing_employee.contact_id,
-                "currency_id": existing_employee.currency_id,
-                "date_of_birth": existing_employee.date_of_birth,
-                "department_id": existing_employee.department_id,
-                "employee_class_id": existing_employee.employee_class_id,
-                "employee_cost": existing_employee.employee_cost,
-                "employment_history": existing_employee.employment_history,
-                "status": existing_employee.status,
-                "custom_fields": existing_employee.custom_fields,
-            }
+            return EmployeeResponse(
+                employee_id=existing_employee.employee_id if existing_employee else employee.employee_id,
+                row_number=existing_employee.row_number if existing_employee else employee.row_number,
+                note=existing_employee.note if existing_employee else employee.note,
+                branch_id=existing_employee.branch_id if existing_employee else employee.branch_id,
+                contact=Contact(
+                    id=existing_employee.contact_id if existing_employee else employee.contact_id,
+                    rowNumber=existing_employee.row_number if existing_employee else employee.row_number,
+                    note=existing_employee.note if existing_employee else employee.note,
+                    Email=existing_employee.contact_email if existing_employee else employee.contact_email,
+                    FirstName=existing_employee.contact_first_name if existing_employee else employee.contact_first_name,
+                    LastName=existing_employee.contact_last_name if existing_employee else employee.contact_last_name,
+                    Phone1=existing_employee.contact_phone1 if existing_employee else employee.contact_phone1,
+                    Phone2=existing_employee.contact_phone2 if existing_employee else employee.contact_phone2,
+                    Title=existing_employee.contact_title if existing_employee else employee.contact_title,
+                    Address=None  # Assuming you'll handle addresses separately
+                ),
+                currency_id=existing_employee.currency_id if existing_employee else employee.currency_id,
+                date_of_birth=existing_employee.date_of_birth if existing_employee else employee.date_of_birth,
+                department_id=existing_employee.department_id if existing_employee else employee.department_id,
+                employee_class_id=existing_employee.employee_class_id if existing_employee else employee.employee_class_id,
+                employee_cost=existing_employee.employee_cost if existing_employee else employee.employee_cost,
+                employment_history=existing_employee.employment_history if existing_employee else employee.employment_history,
+                status=existing_employee.status if existing_employee else employee.status,
+                custom_fields=existing_employee.custom_fields if existing_employee else employee.custom_fields,
+            )
 
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
