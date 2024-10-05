@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from models import Employee, SessionLocal
@@ -55,7 +55,7 @@ class Contact(BaseModel):
     id: Optional[str] = None
     rowNumber: Optional[int] = None
     note: Optional[str] = None
-    Email: Optional[str] = None  # Change from EmailStr to str
+    Email: Optional[str] = None  # Using str for email
     FirstName: Optional[str] = None
     LastName: Optional[str] = None
     Phone1: Optional[str] = None
@@ -152,7 +152,7 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                     Address=None  # Assuming you'll handle addresses separately
                 ),
                 currency_id=existing_employee.currency_id if existing_employee else employee.currency_id,
-                date_of_birth=existing_employee.date_of_birth if existing_employee else employee.date_of_birth,
+                date_of_birth=existing_employee.date_of_birth.strftime("%Y-%m-%d") if existing_employee else employee.date_of_birth.strftime("%Y-%m-%d"),  # Convert to string
                 department_id=existing_employee.department_id if existing_employee else employee.department_id,
                 employee_class_id=existing_employee.employee_class_id if existing_employee else employee.employee_class_id,
                 employee_cost=existing_employee.employee_cost if existing_employee else employee.employee_cost,
