@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
-import requests
 from sqlalchemy.orm import Session
-from employee_put_models import Employee  # Import your SQLAlchemy model
+from employee_put_models import Employee, EmployeePutModel  # Import your SQLAlchemy model and Pydantic model
 from models import SessionLocal  # Import session factory
 from datetime import datetime
 
@@ -32,3 +31,8 @@ def update_employee(employee_id: str, updated_employee: EmployeePutModel, db: Se
     db.commit()
 
     return {"message": "Employee updated successfully", "employee_id": employee.Nokt}
+
+# Run the app
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
