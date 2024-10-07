@@ -14,11 +14,17 @@ def get_db():
     finally:
         db.close()
 
-# Mapping between your database fields and API fields
+# Mapping between your API fields and database fields
 FIELD_MAPPING = {
-    "Nokt": "EmployeeID",
-    "Nama": "Name",
-    "tkhLahir": "DateOfBirth",
+    "BranchID": "branch_id",            # Map API BranchID to DB branch_id
+    "CurrencyID": "currency_id",        # Map API CurrencyID to DB currency_id
+    "DateOfBirth": "tkhLahir",          # Map API DateOfBirth to DB tkhLahir
+    "DepartmentID": "department_id",     # Map API DepartmentID to DB department_id
+    "EmployeeClassID": "employee_class_id", # Map API EmployeeClassID to DB employee_class_id
+    "EmployeeID": "Nokt",               # Map API EmployeeID to DB Nokt
+    "Name": "Nama",                     # Map API Name to DB Nama
+    "PaymentMethod": "payment_method",   # Map API PaymentMethod to DB payment_method
+    "Status": "status",                  # Map API Status to DB status
 }
 
 # PUT endpoint to update employee data based on the employee_id
@@ -31,12 +37,14 @@ def update_employee(employee_id: str, updated_employee: EmployeePutModel, db: Se
         raise HTTPException(status_code=404, detail="Employee not found")
 
     # Update fields using the mapping
-    for db_field, api_field in FIELD_MAPPING.items():
-        value = getattr(updated_employee, db_field).value if hasattr(updated_employee, db_field) else None
-        if value:
-            if db_field == "tkhLahir":
-                value = datetime.fromisoformat(value.replace("Z", "+00:00"))  # Convert to datetime
-            setattr(employee, db_field, value)  # Update the employee model field
+    for api_field, db_field in FIELD_MAPPING.items():
+        value = getattr(updated_employee, api_field, None)
+        
+        if value and value.value:  # Ensure the value exists
+            if db_field == "tkhLahir":  # Special case for DateOfBirth
+                setattr(employee, db_field, datetime.fromisoformat(value.value.replace("Z", "+00:00")))
+            else:
+                setattr(employee, db_field, value.value)
 
     # Commit the changes to the database
     db.commit()
