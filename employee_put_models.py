@@ -12,15 +12,13 @@ class Employee(Base):
 
     Nokt = Column(String(15), primary_key=True, index=True)  # Employee ID as the primary key
     Nama = Column(String(100), nullable=True)  # Full name
-    Nokpbaru = Column(String(15), nullable=True)  # New ID
     tkhLahir = Column(DateTime, nullable=True)  # Date of Birth
 
 # Pydantic model for the API request
 class ValueField(BaseModel):
-    value: Optional[str]
+    value: Optional[str]  # Make value optional
 
 class EmployeePutModel(BaseModel):
     Nokt: ValueField
     Nama: ValueField
-    Nokpbaru: ValueField
     tkhLahir: ValueField
