@@ -1,9 +1,10 @@
-# employee_put.py
-
-from fastapi import FastAPI, HTTPException, Header
+from fastapi import FastAPI, HTTPException, Depends
 import requests
-from pydantic import BaseModel, ValidationError
-from typing import List, Dict, Optional
+from sqlalchemy.orm import Session
+from employee_put_models import Employee, EmployeePutModel  # Import models from employee_put_models.py
+from models import SessionLocal  # Import the session for DB connection
+from typing import Dict, Any
+from datetime import datetime
 
 app = FastAPI()
 
@@ -11,7 +12,7 @@ app = FastAPI()
 token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
 
 # Function to authenticate and get a session token
-def get_auth_token() -> dict:
+def get_auth_token() -> str:
     payload = {
         "grant_type": "password",
         "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
@@ -20,150 +21,79 @@ def get_auth_token() -> dict:
         "username": "apiuser",
         "password": "apiuser"
     }
-
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        return response.json()  # Return the entire token response
+        return response.json().get("access_token")
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Define the data models for the expected request body structure
-class CustomField(BaseModel):
-    type: Optional[str]  # Made optional
-    value: Optional[str]  # Made optional
-
-class Address(BaseModel):
-    id: Optional[str]  # Made optional
-    rowNumber: Optional[int]  # Made optional
-    note: Optional[str]  # Made optional
-    AddressLine1: Optional[Dict]  # Made optional
-    AddressLine2: Optional[Dict]  # Made optional
-    City: Optional[Dict]  # Made optional
-    Country: Optional[Dict]  # Made optional
-    PostalCode: Optional[Dict]  # Made optional
-    State: Optional[Dict]  # Made optional
-    custom: Optional[Dict]  # Made optional
-
-class EmploymentHistory(BaseModel):
-    id: Optional[str]  # Made optional
-    rowNumber: Optional[int]  # Made optional
-    note: Optional[str]  # Made optional
-    Active: Optional[Dict]  # Made optional
-    EndDate: Optional[Dict]  # Made optional
-    LineNbr: Optional[Dict]  # Made optional
-    PositionID: Optional[Dict]  # Made optional
-    RehireEligible: Optional[Dict]  # Made optional
-    StartDate: Optional[Dict]  # Made optional
-    StartReason: Optional[Dict]  # Made optional
-    Terminated: Optional[Dict]  # Made optional
-    TerminationReason: Optional[Dict]  # Made optional
-    custom: Optional[Dict]  # Made optional
-
-class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: Optional[CustomField]  # Made optional
-    UsrPlacementID: Optional[CustomField]  # Made optional
-    CalendarID: Optional[CustomField]  # Made optional
-    HoursValidation: Optional[CustomField]  # Made optional
-    SalesPersonID: Optional[CustomField]  # Made optional
-    UserID: Optional[CustomField]  # Made optional
-    AllowOverrideCury: Optional[CustomField]  # Made optional
-    CuryRateTypeID: Optional[CustomField]  # Made optional
-    AllowOverrideRate: Optional[CustomField]  # Made optional
-    LabourItemID: Optional[CustomField]  # Made optional
-    UnionID: Optional[CustomField]  # Made optional
-    RouteEmails: Optional[CustomField]  # Made optional
-    TimeCardRequired: Optional[CustomField]  # Made optional
-    NoteID: Optional[CustomField]  # Made optional
-    PrepaymentAcctID: Optional[CustomField]  # Made optional
-    PrepaymentSubID: Optional[CustomField]  # Made optional
-    ExpenseAcctID: Optional[CustomField]  # Made optional
-    ExpenseSubID: Optional[CustomField]  # Made optional
-    SalesAcctID: Optional[CustomField]  # Made optional
-    SalesSubID: Optional[CustomField]  # Made optional
-    TermsID: Optional[CustomField]  # Made optional
-
-class EmployeeData(BaseModel):
-    id: Optional[str]  # Made optional
-    rowNumber: Optional[int]  # Made optional
-    note: Optional[str]  # Made optional
-    BranchID: Optional[Dict]  # Made optional
-    Contact: Optional[Dict]  # Made optional
-    CurrencyID: Optional[Dict]  # Made optional
-    DateOfBirth: Optional[Dict]  # Made optional
-    DepartmentID: Optional[Dict]  # Made optional
-    EmployeeClassID: Optional[Dict]  # Made optional
-    EmployeeCost: Optional[List[Dict]]  # Made optional
-    EmployeeID: Optional[Dict]  # Made optional
-    EmploymentHistory: Optional[List[EmploymentHistory]]  # Made optional
-    Name: Optional[Dict]  # Made optional
-    PaymentMethod: Optional[Dict]  # Made optional
-    ReportsToID: Optional[Dict]  # Made optional
-    Status: Optional[Dict]  # Made optional
-    custom: Optional[CurrentEmployee]  # Made optional
-
-# Endpoint to update employee information
-@app.put("/organization/employee", response_model=EmployeeData)
-def update_employee(employee_id: str, employee_data: EmployeeData, authorization: Optional[str] = Header(None)):
+# Dependency to get a DB session
+def get_db():
+    db = SessionLocal()
     try:
-        # If no authorization token is provided in the header, get a new token
-        if authorization is None:
-            token_response = get_auth_token()  # Retrieve a new token
-            authorization = token_response.get("access_token")  # Use the access_token
+        yield db
+    finally:
+        db.close()
 
-        # External API URL to update employee information
-        url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee/{employee_id}"
+# Mapping between your database fields and API fields
+FIELD_MAPPING = {
+    "Nokt": "EmployeeID",      # Replace with actual API field if needed
+    "Nama": "Name",            # Replace with actual API field if needed
+    "Nokplama": "OldID",       # Placeholder for API field
+    "Nokpbaru": "NewID",       # Placeholder for API field
+    "tkhLahir": "DateOfBirth", # Replace with actual API field if needed
+    # Add other mappings here...
+}
 
-        # Include the authorization token in the headers
+# Function to map database fields to API fields
+def map_fields_to_api(employee: Employee):
+    employee_data = {}
+    for db_field, api_field in FIELD_MAPPING.items():
+        value = getattr(employee, db_field, None)
+        if isinstance(value, datetime):
+            value = value.isoformat()  # Format datetime values
+        employee_data[api_field] = {"value": value}
+    return employee_data
+
+# Fetch employee from the database and send PUT request to the remote server
+@app.put("/organization/employee/{employee_id}")
+def update_employee_to_remote(employee_id: str, db: Session = Depends(get_db)):
+    try:
+        # Fetch employee from the peribadi_GRP table
+        employee = db.query(Employee).filter(Employee.Nokt == employee_id).first()
+
+        if not employee:
+            raise HTTPException(status_code=404, detail="Employee not found")
+
+        # Map the database fields to the API fields
+        employee_data = map_fields_to_api(employee)
+
+        # Get authentication token
+        access_token = get_auth_token()
+
+        # Send PUT request to the remote server
+        remote_url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee/{employee_id}"
         headers = {
-            "Authorization": f"Bearer {authorization}",  # Use the retrieved token
-            'Content-Type': 'application/json'  # Setting content type
+            "Authorization": f"Bearer {access_token}",
+            "Content-Type": "application/json"
         }
 
-        # Log the request URL and headers for debugging
-        print(f"Requesting URL: {url}")
-        print(f"Request Headers: {headers}")
-        print(f"Request Body: {employee_data.json()}")  # Log the request body
-
-        # Send the PUT request to update employee data
-        response = requests.put(url, headers=headers, json=employee_data.dict(exclude_unset=True))  # Only include set fields
-
-        # Log the response status code and content
-        print(f"Response Status Code: {response.status_code}")
-        print(f"Response Content: {response.text}")
+        response = requests.put(remote_url, json=employee_data, headers=headers)
 
         if response.status_code == 200:
-            updated_employee_data = response.json()
-            return EmployeeData(**updated_employee_data)  # Return the updated employee data
-        
+            return {"message": "Employee data updated successfully on remote server."}
         elif response.status_code == 400:
-            raise HTTPException(status_code=400, detail="Bad Request")
-        elif response.status_code == 401:
-            raise HTTPException(status_code=401, detail="Unauthorized - Please check your access token")
-        elif response.status_code == 403:
-            raise HTTPException(status_code=403, detail="Forbidden - Access denied")
-        elif response.status_code == 404:
-            raise HTTPException(status_code=404, detail="Employee not found")
+            return {"message": "Bad Request", "details": response.json()}
         elif response.status_code == 500:
-            raise HTTPException(status_code=500, detail="Internal Server Error")
+            return {"message": "Server error on remote server", "details": response.json()}
         else:
-            raise HTTPException(status_code=response.status_code, detail="An error occurred")
-
-    except ValidationError as e:
-        # Handle validation errors and provide detailed feedback
-        missing_fields = [error['loc'][-1] for error in e.errors() if error['type'] == 'value_error.missing']
-        if missing_fields:
-            detail_message = f"Missing required fields: {', '.join(missing_fields)}"
-            raise HTTPException(status_code=422, detail=detail_message)
-        raise HTTPException(status_code=422, detail="Validation error")
+            response.raise_for_status()
 
     except Exception as e:
-        print(f"Exception occurred: {str(e)}")  # Log any unexpected exceptions
-        raise HTTPException(status_code=500, detail="An unexpected error occurred")
+        print(f"Exception occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 # Run the app
 if __name__ == "__main__":
