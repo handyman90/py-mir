@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
-from employee_put_models import Employee, EmployeePutModel  # Import your SQLAlchemy model and Pydantic model
+from employee_put_models import Employee, EmployeePutModel  # Import your SQLAlchemy and Pydantic models
 from models import SessionLocal  # Import session factory
 from datetime import datetime
 
@@ -14,6 +14,13 @@ def get_db():
     finally:
         db.close()
 
+# Mapping between your database fields and API fields
+FIELD_MAPPING = {
+    "Nokt": "EmployeeID",
+    "Nama": "Name",
+    "tkhLahir": "DateOfBirth",
+}
+
 # PUT endpoint to update employee data based on the employee_id
 @app.put("/organization/employee/{employee_id}")
 def update_employee(employee_id: str, updated_employee: EmployeePutModel, db: Session = Depends(get_db)):
@@ -23,9 +30,13 @@ def update_employee(employee_id: str, updated_employee: EmployeePutModel, db: Se
     if not employee:
         raise HTTPException(status_code=404, detail="Employee not found")
 
-    # Update fields
-    employee.Nama = updated_employee.Nama.value or employee.Nama
-    employee.tkhLahir = datetime.fromisoformat(updated_employee.tkhLahir.value.replace("Z", "+00:00")) if updated_employee.tkhLahir.value else employee.tkhLahir
+    # Update fields using the mapping
+    for db_field, api_field in FIELD_MAPPING.items():
+        value = getattr(updated_employee, db_field).value if hasattr(updated_employee, db_field) else None
+        if value:
+            if db_field == "tkhLahir":
+                value = datetime.fromisoformat(value.replace("Z", "+00:00"))  # Convert to datetime
+            setattr(employee, db_field, value)  # Update the employee model field
 
     # Commit the changes to the database
     db.commit()
