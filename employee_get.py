@@ -2,9 +2,9 @@ from fastapi import FastAPI, HTTPException, Depends, Header
 import requests
 from sqlalchemy.orm import Session
 from models import SessionLocal
-from employee_get_models import Employee, EmployeeGetModel  # Import the SQLAlchemy model for GET operation
+from employee_get_models import Employee, EmployeeGetModel, EmployeeResponse  # Import the models
 from typing import List
-from datetime import datetime  # Make sure to import datetime
+from datetime import datetime
 
 app = FastAPI()
 
@@ -39,7 +39,7 @@ def get_auth_token() -> str:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
 # Endpoint to retrieve and save employee information
-@app.get("/organization/employee", response_model=EmployeeGetModel)
+@app.get("/organization/employee", response_model=EmployeeResponse)
 def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
