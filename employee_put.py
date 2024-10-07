@@ -37,7 +37,7 @@ def get_db():
     finally:
         db.close()
 
-# Mapping between your database fields and API fields
+# Mapping between your database fields and API fields (Nokplama removed)
 FIELD_MAPPING = {
     "Nokt": "EmployeeID",      # Replace with actual API field if needed
     "Nama": "Name",            # Replace with actual API field if needed
