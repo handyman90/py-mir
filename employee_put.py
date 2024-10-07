@@ -41,8 +41,7 @@ def get_db():
 FIELD_MAPPING = {
     "Nokt": "EmployeeID",      # Replace with actual API field if needed
     "Nama": "Name",            # Replace with actual API field if needed
-    "Nokplama": "OldID",       # Placeholder for API field
-    "Nokpbaru": "NewID",       # Placeholder for API field
+    "Nokpbaru": "IdentityNumber",       # Placeholder for API field
     "tkhLahir": "DateOfBirth", # Replace with actual API field if needed
     # Add other mappings here...
 }
