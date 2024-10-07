@@ -35,6 +35,9 @@ class Employee(Base):
     links = Column(JSON, nullable=True)  # Store links as JSON
 
 # Pydantic model for the API response
+class ValueField(BaseModel):
+    value: Optional[str]
+
 class EmployeeGetModel(BaseModel):
     employee_id: Optional[str]
     row_number: Optional[int]
@@ -59,3 +62,30 @@ class EmployeeGetModel(BaseModel):
     status: Optional[str]
     custom_fields: Optional[Dict[str, Any]] = None
     links: Optional[Dict[str, Any]] = None
+
+# Pydantic model for the response structure
+class EmployeeResponse(BaseModel):
+    id: str
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
+    BranchID: ValueField
+    Calendar: ValueField
+    CashAccount: ValueField
+    CurrencyID: ValueField
+    DateOfBirth: ValueField
+    DepartmentID: ValueField
+    EmployeeClassID: ValueField
+    EmployeeID: ValueField
+    ExpenseAccount: ValueField
+    ExpenseSubaccount: ValueField
+    IdentityNumber: ValueField
+    IdentityType: ValueField
+    LastModifiedDateTime: ValueField
+    Name: ValueField
+    PaymentMethod: ValueField
+    ReportsToID: Optional[Dict[str, Any]] = None
+    SalesAccount: ValueField
+    SalesSubaccount: ValueField
+    Status: ValueField
+    custom: Optional[Dict[str, Any]] = None
+    _links: Optional[Dict[str, Any]] = None
