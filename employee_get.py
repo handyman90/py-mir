@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Depends, Header
+import requests
 from sqlalchemy.orm import Session
 from models import SessionLocal
 from employee_get_models import Employee, EmployeeGetModel  # Import the SQLAlchemy model for GET operation
-import requests
 from typing import List
+from datetime import datetime  # Make sure to import datetime
 
 app = FastAPI()
 
