@@ -1,18 +1,25 @@
-from fastapi import FastAPI, HTTPException, Header, Depends
-import requests
-from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from fastapi import FastAPI, HTTPException, Depends, Header
 from sqlalchemy.orm import Session
-from models import Employee, SessionLocal
-from datetime import datetime
+from models import SessionLocal
+from employee_get_models import Employee, EmployeeGetModel  # Import the SQLAlchemy model for GET operation
+import requests
+from typing import List
 
 app = FastAPI()
+
+# Dependency to get a DB session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # Token URL and payload for authentication
 token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
 
 # Function to authenticate and get a session token
-def get_auth_token() -> dict:
+def get_auth_token() -> str:
     payload = {
         "grant_type": "password",
         "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
@@ -26,59 +33,16 @@ def get_auth_token() -> dict:
     response = requests.post(token_url, data=payload, headers=headers)
 
     if response.status_code == 200:
-        return response.json()
+        return response.json().get("access_token")
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Dependency to get a DB session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# Pydantic models for response structure
-class Link(BaseModel):
-    self: Optional[str]  # Make it optional
-    files_put: Optional[str]  # Make it optional
-
-class ValueField(BaseModel):
-    value: Optional[str]  # Make value optional
-
-class EmployeeResponse(BaseModel):
-    id: str
-    rowNumber: Optional[int] = None
-    note: Optional[str] = None
-    BranchID: ValueField
-    Calendar: ValueField
-    CashAccount: ValueField
-    CurrencyID: ValueField
-    DateOfBirth: ValueField
-    DepartmentID: ValueField
-    EmployeeClassID: ValueField
-    EmployeeID: ValueField
-    ExpenseAccount: ValueField
-    ExpenseSubaccount: ValueField
-    IdentityNumber: ValueField
-    IdentityType: ValueField
-    LastModifiedDateTime: ValueField
-    Name: ValueField
-    PaymentMethod: ValueField
-    ReportsToID: Optional[Dict[str, Any]] = None
-    SalesAccount: ValueField
-    SalesSubaccount: ValueField
-    Status: ValueField
-    custom: Optional[Dict[str, Any]] = None
-    _links: Link
-
 # Endpoint to retrieve and save employee information
-@app.get("/organization/employee", response_model=EmployeeResponse)
+@app.get("/organization/employee", response_model=EmployeeGetModel)
 def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
-            token_response = get_auth_token()
-            authorization = token_response.get("access_token")
+            authorization = get_auth_token()
 
         url = "http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee"
         headers = {"Authorization": f"Bearer {authorization}"}
