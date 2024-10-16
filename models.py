@@ -1,10 +1,22 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, JSON, Boolean
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
+# Database URL (make sure to use the correct password format)
+SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/employee?driver=ODBC+Driver+17+for+SQL+Server"
+
+# Create the SQLAlchemy engine
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
+# Create a configured "Session" class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Base class for declarative models
 Base = declarative_base()
 
+# Employee model
 class Employee(Base):
-    __tablename__ = 'employees'
+    __tablename__ = 'employee'
 
     id = Column(String(36), primary_key=True, index=True)  # UUID or unique identifier
     row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
@@ -74,4 +86,6 @@ class Employee(Base):
     Status = Column(String(30), nullable=True)  # Status
     Custom = Column(String, nullable=True)  # Store custom fields
     Links = Column(String, nullable=True)  # Store links as JSON
- 
+
+# Create the tables in the database
+Base.metadata.create_all(bind=engine)
