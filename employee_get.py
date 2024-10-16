@@ -1,16 +1,15 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from sqlalchemy.orm import Session
-from models import Employee, SessionLocal  # Import your database models
 from employee_get_models import EmployeeResponse  # Import the updated Pydantic models
-from datetime import datetime
+from models import SessionLocal  # Your database models
+from typing import Optional
 
 app = FastAPI()
 
 # Token URL and payload for authentication
 token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
 
-# Function to authenticate and get a session token
 def get_auth_token() -> dict:
     payload = {
         "grant_type": "password",
@@ -37,9 +36,8 @@ def get_db():
     finally:
         db.close()
 
-# Endpoint to retrieve and save employee information
 @app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
+def get_employee(employee_id: str, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
             token_response = get_auth_token()
@@ -59,18 +57,13 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
             # Validate against the EmployeeResponse model
             employee_response = EmployeeResponse(**employee_data)
 
-            # Save employee data to the database (you can implement this part based on your logic)
-            # save_employee_to_db(db, employee_response)
-
             return employee_response
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
     except Exception as e:
-        print(f"Exception occurred: {str(e)}")  # Print the exception for debugging
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Exception occurred: {str(e)}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
-# Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
- 
+    uvicorn.run(app, host="0.0.0.0", port=8000)
