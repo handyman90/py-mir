@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from sqlalchemy.orm import Session
-from employee_get_models import EmployeeResponse  # Ensure this imports the updated model
-from models import Employee, SessionLocal
+from employee_get_models import EmployeeResponse  # Adjusted import for the response model
+from models import SessionLocal  # Keep this import for the SessionLocal
 from datetime import datetime
+from employee_put_models import Employee  # Import Employee from put models, if needed
 
 app = FastAPI()
 
