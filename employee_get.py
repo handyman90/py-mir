@@ -65,18 +65,9 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                 # Create a new employee record logic here...
                 pass  # Create logic goes here
 
-            # Convert boolean and integer fields to strings if necessary
-            for history in employee_data.get("EmploymentHistory", []):
-                history['Active'] = {'value': str(history['Active']['value'])}  # Convert bool to string
-                history['LineNbr'] = {'value': str(history['LineNbr']['value'])}  # Convert int to string
-                history['RehireEligible'] = {'value': str(history['RehireEligible']['value'])}  # Convert bool to string
-                history['Terminated'] = {'value': str(history['Terminated']['value'])}  # Convert bool to string
-
-            for payment in employee_data.get("PaymentInstruction", []):
-                payment['BAccountID'] = {'value': str(payment['BAccountID']['value'])}  # Convert int to string
-                payment['LocationID'] = {'value': str(payment['LocationID']['value'])}  # Convert int to string
-
             # Directly unpacking the response to the model
+            employee_data['links'] = employee_data.get('links', {})  # Ensure links field is included
+
             return EmployeeResponse(**employee_data)
 
         else:
