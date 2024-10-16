@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 class ValueField(BaseModel):
-    value: Optional[str]
+    value: Optional[Union[str, int, bool]]  # Accept string, integer, or boolean
 
 class Address(BaseModel):
     id: Optional[str]
@@ -41,14 +41,14 @@ class EmploymentHistory(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    Active: Optional[ValueField]
+    Active: Optional[ValueField]  # Now accepts bool as well
     EndDate: Optional[Dict]
-    LineNbr: Optional[ValueField]
+    LineNbr: Optional[ValueField]  # Now accepts int as well
     PositionID: Optional[ValueField]
-    RehireEligible: Optional[ValueField]
+    RehireEligible: Optional[ValueField]  # Now accepts bool as well
     StartDate: Optional[ValueField]
     StartReason: Optional[ValueField]
-    Terminated: Optional[ValueField]
+    Terminated: Optional[ValueField]  # Now accepts bool as well
     TerminationReason: Optional[Dict]
     custom: Optional[Dict]
     _links: Optional[Dict]
@@ -58,10 +58,10 @@ class PaymentInstruction(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    BAccountID: Optional[ValueField]
+    BAccountID: Optional[ValueField]  # Now accepts int as well
     Description: Optional[ValueField]
     InstructionID: Optional[ValueField]
-    LocationID: Optional[ValueField]
+    LocationID: Optional[ValueField]  # Now accepts int as well
     PaymentMethod: Optional[ValueField]
     Value: Optional[ValueField]
     custom: Optional[Dict]
