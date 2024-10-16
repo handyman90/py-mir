@@ -1,59 +1,61 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import Optional, List, Dict
 
 class ValueField(BaseModel):
     value: Optional[str]
 
 class Address(BaseModel):
-    id: Optional[str]
+    id: str
     rowNumber: Optional[int]
     note: Optional[str]
     AddressLine1: ValueField
     AddressLine2: ValueField
-    City: Optional[Dict[str, Any]]
+    City: Optional[Dict]
     Country: ValueField
-    PostalCode: Optional[Dict[str, Any]]
-    State: Optional[Dict[str, Any]]
-    custom: Optional[Dict[str, Any]]
-    files: Optional[List]
+    PostalCode: Optional[Dict]
+    State: Optional[Dict]
+    custom: Optional[Dict]
+    files: Optional[List[Dict]]
 
 class Contact(BaseModel):
-    id: Optional[str]
+    id: str
     rowNumber: Optional[int]
     note: Optional[str]
     Address: Address
     DisplayName: ValueField
     Email: ValueField
-    Fax: Optional[Dict[str, Any]]
-    FirstName: Optional[Dict[str, Any]]
+    Fax: Optional[Dict]
+    FirstName: Optional[Dict]
     LastName: ValueField
-    MiddleName: Optional[Dict[str, Any]]
-    Phone1: Optional[Dict[str, Any]]
+    MiddleName: Optional[Dict]
+    Phone1: Optional[Dict]
     Phone1Type: ValueField
-    Phone2: Optional[Dict[str, Any]]
+    Phone2: Optional[Dict]
     Phone2Type: ValueField
     Title: ValueField
-    custom: Optional[Dict[str, Any]]
-    files: Optional[List]
+    WebSite: Optional[Dict]
+    custom: Optional[Dict]
+    files: Optional[List[Dict]]
 
 class EmploymentHistory(BaseModel):
-    id: Optional[str]
+    id: str
     rowNumber: Optional[int]
     note: Optional[str]
     Active: ValueField
-    EndDate: Optional[Dict[str, Any]]
+    EndDate: Optional[Dict]
     LineNbr: ValueField
     PositionID: ValueField
     RehireEligible: ValueField
     StartDate: ValueField
     StartReason: ValueField
     Terminated: ValueField
-    TerminationReason: Optional[Dict[str, Any]]
-    custom: Optional[Dict[str, Any]]
-    files: Optional[List]
+    TerminationReason: Optional[Dict]
+    custom: Optional[Dict]
+    _links: Optional[Dict]
+    files: Optional[List[Dict]]
 
 class PaymentInstruction(BaseModel):
-    id: Optional[str]
+    id: str
     rowNumber: Optional[int]
     note: Optional[str]
     BAccountID: ValueField
@@ -62,13 +64,13 @@ class PaymentInstruction(BaseModel):
     LocationID: ValueField
     PaymentMethod: ValueField
     Value: ValueField
-    custom: Optional[Dict[str, Any]]
-    files: Optional[List]
+    custom: Optional[Dict]
+    files: Optional[List[Dict]]
 
 class EmployeeResponse(BaseModel):
     id: str
-    rowNumber: Optional[int] = None
-    note: Optional[str] = None
+    rowNumber: Optional[int]
+    note: Optional[str]
     BranchID: ValueField
     Calendar: ValueField
     CashAccount: ValueField
@@ -87,9 +89,9 @@ class EmployeeResponse(BaseModel):
     Name: ValueField
     PaymentInstruction: List[PaymentInstruction]
     PaymentMethod: ValueField
-    ReportsToID: Optional[Dict[str, Any]] = None
+    ReportsToID: Optional[Dict]
     SalesAccount: ValueField
     SalesSubaccount: ValueField
     Status: ValueField
-    custom: Optional[Dict[str, Any]] = None
-    links: Optional[Dict[str, Any]] = None
+    Custom: Optional[Dict]
+    Links: Optional[Dict]
