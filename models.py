@@ -1,118 +1,76 @@
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, JSON, ForeignKey
+from sqlalchemy import Column, String, Integer, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship, sessionmaker
 
-# Database configuration with your password
-SQLALCHEMY_DATABASE_URL = (
-    "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
-)
-
-# Creating the database engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Base class for SQLAlchemy models
 Base = declarative_base()
 
-# SQLAlchemy model for the Address table
-class Address(Base):
-    __tablename__ = 'address'
-    
-    id = Column(String(36), primary_key=True, index=True)  # Address ID
-    row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
-    note = Column(String, nullable=True)  # Note field
-    address_line1 = Column(String, nullable=True)  # AddressLine1
-    address_line2 = Column(String, nullable=True)  # AddressLine2
-    city = Column(String, nullable=True)  # City
-    country = Column(String, nullable=True)  # Country
-    postal_code = Column(String, nullable=True)  # PostalCode
-    state = Column(String, nullable=True)  # State
-
-# SQLAlchemy model for the Contact table
-class Contact(Base):
-    __tablename__ = 'contact'
-    
-    id = Column(String(36), primary_key=True, index=True)  # Contact ID
-    row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
-    note = Column(String, nullable=True)  # Note field
-    display_name = Column(String, nullable=True)  # DisplayName
-    email = Column(String, nullable=True)  # Email
-    fax = Column(String, nullable=True)  # Fax
-    first_name = Column(String, nullable=True)  # FirstName
-    last_name = Column(String, nullable=True)  # LastName
-    middle_name = Column(String, nullable=True)  # MiddleName
-    phone1 = Column(String, nullable=True)  # Phone1
-    phone1_type = Column(String, nullable=True)  # Phone1Type
-    phone2 = Column(String, nullable=True)  # Phone2
-    phone2_type = Column(String, nullable=True)  # Phone2Type
-    title = Column(String, nullable=True)  # Title
-    address_id = Column(String, ForeignKey('address.id'), nullable=True)  # Foreign Key to Address
-
-    # Relationship
-    address = relationship("Address", back_populates="contacts")
-
-# SQLAlchemy model for the EmploymentHistory table
-class EmploymentHistory(Base):
-    __tablename__ = 'employment_history'
-    
-    id = Column(String(36), primary_key=True, index=True)  # Employment History ID
-    row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
-    note = Column(String, nullable=True)  # Note field
-    active = Column(String, nullable=True)  # Active
-    end_date = Column(DateTime, nullable=True)  # EndDate
-    line_nbr = Column(Integer, nullable=True)  # LineNbr
-    position_id = Column(String, nullable=True)  # PositionID
-    rehire_eligible = Column(String, nullable=True)  # RehireEligible
-    start_date = Column(DateTime, nullable=True)  # StartDate
-    start_reason = Column(String, nullable=True)  # StartReason
-    terminated = Column(String, nullable=True)  # Terminated
-    termination_reason = Column(String, nullable=True)  # TerminationReason
-
-# SQLAlchemy model for the PaymentInstruction table
-class PaymentInstruction(Base):
-    __tablename__ = 'payment_instruction'
-    
-    id = Column(String(36), primary_key=True, index=True)  # Payment Instruction ID
-    row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
-    note = Column(String, nullable=True)  # Note field
-    b_account_id = Column(Integer, nullable=True)  # BAccountID
-    description = Column(String, nullable=True)  # Description
-    instruction_id = Column(String, nullable=True)  # InstructionID
-    location_id = Column(Integer, nullable=True)  # LocationID
-    payment_method = Column(String, nullable=True)  # PaymentMethod
-    value = Column(String, nullable=True)  # Value
-
-# SQLAlchemy model for the employee table
 class Employee(Base):
-    __tablename__ = 'employee'
+    __tablename__ = 'employees'
 
     id = Column(String(36), primary_key=True, index=True)  # UUID or unique identifier
     row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
     note = Column(String, nullable=True)  # Note field
-    branch_id = Column(String(30), nullable=True)  # BranchID
-    calendar = Column(String(30), nullable=True)  # Calendar
-    cash_account = Column(String(30), nullable=True)  # CashAccount
-    currency_id = Column(String(10), nullable=True)  # CurrencyID
-    date_of_birth = Column(DateTime, nullable=True)  # DateOfBirth
-    department_id = Column(String(30), nullable=True)  # DepartmentID
-    employee_class_id = Column(String(10), nullable=True)  # EmployeeClassID
-    employee_id = Column(String(30), nullable=True)  # EmployeeID
-    expense_account = Column(String(30), nullable=True)  # ExpenseAccount
-    expense_subaccount = Column(String(30), nullable=True)  # ExpenseSubaccount
-    identity_number = Column(String(30), nullable=True)  # IdentityNumber
-    identity_type = Column(String(30), nullable=True)  # IdentityType
-    last_modified_date_time = Column(DateTime, nullable=True)  # LastModifiedDateTime
-    name = Column(String(255), nullable=True)  # Name
-    payment_method = Column(String(10), nullable=True)  # PaymentMethod
-    reports_to_id = Column(String, nullable=True)  # ReportsToID
-    sales_account = Column(String(30), nullable=True)  # SalesAccount
-    sales_subaccount = Column(String(30), nullable=True)  # SalesSubaccount
-    status = Column(String, nullable=True)  # Status
-
-    # Relationships
-    contact = relationship("Contact", back_populates="employee", uselist=False)
-    employment_history = relationship("EmploymentHistory", back_populates="employee")
-    payment_instruction = relationship("PaymentInstruction", back_populates="employee")
-
-# Create all tables in the database (if they don't already exist)
-Base.metadata.create_all(bind=engine)
+    BranchID = Column(String(30), nullable=True)  # BranchID
+    Calendar = Column(String(30), nullable=True)  # Calendar
+    CashAccount = Column(String(30), nullable=True)  # CashAccount
+    ContactID = Column(String(36), nullable=True)  # Contact ID
+    ContactRowNumber = Column(Integer, nullable=True)  # Contact row number
+    ContactNote = Column(String, nullable=True)  # Contact note
+    ContactDisplayName = Column(String, nullable=True)  # Contact display name
+    ContactEmail = Column(String, nullable=True)  # Contact email
+    ContactFax = Column(String, nullable=True)  # Contact fax
+    ContactFirstName = Column(String, nullable=True)  # Contact first name
+    ContactLastName = Column(String, nullable=True)  # Contact last name
+    ContactMiddleName = Column(String, nullable=True)  # Contact middle name
+    ContactPhone1 = Column(String, nullable=True)  # Contact phone 1
+    ContactPhone1Type = Column(String, nullable=True)  # Contact phone 1 type
+    ContactPhone2 = Column(String, nullable=True)  # Contact phone 2
+    ContactPhone2Type = Column(String, nullable=True)  # Contact phone 2 type
+    ContactTitle = Column(String, nullable=True)  # Contact title
+    AddressID = Column(String(36), nullable=True)  # Address ID
+    AddressRowNumber = Column(Integer, nullable=True)  # Address row number
+    AddressNote = Column(String, nullable=True)  # Address note
+    AddressLine1 = Column(String, nullable=True)  # Address line 1
+    AddressLine2 = Column(String, nullable=True)  # Address line 2
+    AddressCity = Column(String, nullable=True)  # Address city
+    AddressCountry = Column(String(10), nullable=True)  # Address country
+    AddressPostalCode = Column(String, nullable=True)  # Address postal code
+    AddressState = Column(String, nullable=True)  # Address state
+    CurrencyID = Column(String(10), nullable=True)  # CurrencyID
+    DateOfBirth = Column(DateTime, nullable=True)  # DateOfBirth
+    DepartmentID = Column(String(30), nullable=True)  # DepartmentID
+    EmployeeClassID = Column(String(10), nullable=True)  # EmployeeClassID
+    EmployeeID = Column(String(30), nullable=True)  # EmployeeID
+    EmploymentHistoryID = Column(String(36), nullable=True)  # EmploymentHistory ID
+    EmploymentHistoryRowNumber = Column(Integer, nullable=True)  # EmploymentHistory row number
+    EmploymentHistoryNote = Column(String, nullable=True)  # EmploymentHistory note
+    EmploymentHistoryActive = Column(Boolean, nullable=True)  # EmploymentHistory active status
+    EmploymentHistoryEndDate = Column(DateTime, nullable=True)  # EmploymentHistory end date
+    EmploymentHistoryLineNbr = Column(Integer, nullable=True)  # EmploymentHistory line number
+    EmploymentHistoryPositionID = Column(String(30), nullable=True)  # EmploymentHistory position ID
+    EmploymentHistoryRehireEligible = Column(Boolean, nullable=True)  # EmploymentHistory rehire eligible
+    EmploymentHistoryStartDate = Column(DateTime, nullable=True)  # EmploymentHistory start date
+    EmploymentHistoryStartReason = Column(String, nullable=True)  # EmploymentHistory start reason
+    EmploymentHistoryTerminated = Column(Boolean, nullable=True)  # EmploymentHistory terminated
+    EmploymentHistoryTerminationReason = Column(String, nullable=True)  # EmploymentHistory termination reason
+    ExpenseAccount = Column(String(30), nullable=True)  # ExpenseAccount
+    ExpenseSubaccount = Column(String(30), nullable=True)  # ExpenseSubaccount
+    IdentityNumber = Column(String(30), nullable=True)  # IdentityNumber
+    IdentityType = Column(String(30), nullable=True)  # IdentityType
+    LastModifiedDateTime = Column(DateTime, nullable=True)  # LastModifiedDateTime
+    Name = Column(String, nullable=True)  # Name
+    PaymentInstructionID = Column(String(36), nullable=True)  # PaymentInstruction ID
+    PaymentInstructionRowNumber = Column(Integer, nullable=True)  # PaymentInstruction row number
+    PaymentInstructionNote = Column(String, nullable=True)  # PaymentInstruction note
+    PaymentInstructionBAccountID = Column(Integer, nullable=True)  # PaymentInstruction BAccountID
+    PaymentInstructionDescription = Column(String, nullable=True)  # PaymentInstruction description
+    PaymentInstructionInstructionID = Column(String(30), nullable=True)  # PaymentInstruction instruction ID
+    PaymentInstructionLocationID = Column(Integer, nullable=True)  # PaymentInstruction location ID
+    PaymentInstructionMethod = Column(String(10), nullable=True)  # PaymentInstruction method
+    PaymentInstructionValue = Column(String, nullable=True)  # PaymentInstruction value
+    PaymentMethod = Column(String(10), nullable=True)  # PaymentMethod
+    ReportsToID = Column(String(30), nullable=True)  # ReportsToID
+    SalesAccount = Column(String(30), nullable=True)  # SalesAccount
+    SalesSubaccount = Column(String(30), nullable=True)  # SalesSubaccount
+    Status = Column(String(30), nullable=True)  # Status
+    Custom = Column(String, nullable=True)  # Store custom fields
+    Links = Column(String, nullable=True)  # Store links as JSON
