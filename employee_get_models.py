@@ -17,25 +17,11 @@ class Address(BaseModel):
     State: Optional[Dict]
     custom: Optional[Dict]
 
-class EmploymentHistory(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    Active: Optional[Dict]
-    EndDate: Optional[Dict]
-    LineNbr: Optional[Dict]
-    PositionID: Optional[Dict]
-    RehireEligible: Optional[Dict]
-    StartDate: Optional[Dict]
-    StartReason: Optional[Dict]
-    Terminated: Optional[Dict]
-    TerminationReason: Optional[Dict]
-    custom: Optional[Dict]
-
 class Contact(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
+    Address: Optional[Address]
     Activities: Optional[List[Dict]] = None
     Attributes: Optional[List[Dict]] = None
     Campaigns: Optional[List[Dict]] = None
@@ -52,45 +38,38 @@ class Contact(BaseModel):
     UserInfo: Optional[Dict] = None
     WebSite: Optional[Dict] = None
     custom: Optional[Dict] = None
+    files: Optional[List[Dict]] = None
 
-class CurrentEmployee(BaseModel):
-    AcctReferenceNbr: Optional[CustomField]
-    UsrPlacementID: Optional[CustomField]
-    CalendarID: Optional[CustomField]
-    HoursValidation: Optional[CustomField]
-    SalesPersonID: Optional[CustomField]
-    UserID: Optional[CustomField]
-    AllowOverrideCury: Optional[CustomField]
-    CuryRateTypeID: Optional[CustomField]
-    AllowOverrideRate: Optional[CustomField]
-    LabourItemID: Optional[CustomField]
-    UnionID: Optional[CustomField]
-    RouteEmails: Optional[CustomField]
-    TimeCardRequired: Optional[CustomField]
-    NoteID: Optional[CustomField]
-    PrepaymentAcctID: Optional[CustomField]
-    PrepaymentSubID: Optional[CustomField]
-    ExpenseAcctID: Optional[CustomField]
-    ExpenseSubID: Optional[CustomField]
-    SalesAcctID: Optional[CustomField]
-    SalesSubID: Optional[CustomField]
-    TermsID: Optional[CustomField]
-
-class EmployeeResponse(BaseModel):
-    id: str
+class EmploymentHistory(BaseModel):
+    id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    BranchID: Dict  # Required
-    CurrencyID: Dict  # Required
-    DateOfBirth: Dict  # Required
-    DepartmentID: Dict  # Required
-    EmployeeClassID: Dict  # Required
-    EmployeeID: Dict  # Required
-    Name: Dict  # Required
-    PaymentMethod: Dict  # Required
-    Status: Dict  # Required
-    Contact: Optional[Contact]  # Optional
-    EmployeeCost: Optional[List[Dict]]  # Optional
-    EmploymentHistory: Optional[List[EmploymentHistory]]  # Optional
-    ReportsToID: Optional[Dict]  # Optional
-    custom: Optional[Dict]  # Optional
+    Active: Optional[Dict]
+    EndDate: Optional[Dict]
+    LineNbr: Optional[Dict]
+    PositionID: Optional[Dict]
+    RehireEligible: Optional[Dict]
+    StartDate: Optional[Dict]
+    StartReason: Optional[Dict]
+    Terminated: Optional[Dict]
+    TerminationReason: Optional[Dict]
+    custom: Optional[Dict]
+
+class EmployeeResponse(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    BranchID: Optional[Dict]
+    Calendar: Optional[Dict]
+    CashAccount: Optional[Dict]
+    Contact: Optional[Contact]
+    CurrencyID: Optional[Dict]
+    DateOfBirth: Optional[Dict]
+    DepartmentID: Optional[Dict]
+    EmployeeClassID: Optional[Dict]
+    EmployeeID: Optional[Dict]
+    Name: Optional[Dict]
+    PaymentMethod: Optional[Dict]
+    Status: Optional[Dict]
+    EmploymentHistory: Optional[List[EmploymentHistory]]
+    custom: Optional[Dict]
