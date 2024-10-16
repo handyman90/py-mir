@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from models import Employee, Contact, Address, EmploymentHistory, PaymentInstruction, SessionLocal
 from employee_get_models import EmployeeResponse
 from datetime import datetime
+from typing import Optional  # Import Optional
 
 app = FastAPI()
 
