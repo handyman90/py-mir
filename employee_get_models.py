@@ -36,30 +36,22 @@ class Contact(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    Activities: Optional[List[Dict]]
-    Address: Optional[Address]
-    Attributes: Optional[List[Dict]]
-    Campaigns: Optional[List[Dict]]
-    Cases: Optional[List[Dict]]
-    DisplayName: Optional[Dict]
-    Duplicates: Optional[List[Dict]]
-    Email: Optional[Dict]
-    Fax: Optional[Dict]
-    FirstName: Optional[Dict]
-    LastName: Optional[Dict]
-    MarketingLists: Optional[List[Dict]]
-    MiddleName: Optional[Dict]
-    Notifications: Optional[List[Dict]]
-    Opportunities: Optional[List[Dict]]
-    Phone1: Optional[Dict]
-    Phone1Type: Optional[Dict]
-    Phone2: Optional[Dict]
-    Phone2Type: Optional[Dict]
-    Relations: Optional[List[Dict]]
-    Title: Optional[Dict]
-    UserInfo: Optional[Dict]
-    WebSite: Optional[Dict]
-    custom: Optional[Dict]
+    Activities: Optional[List[Dict]] = None  # Set to Optional
+    Attributes: Optional[List[Dict]] = None  # Set to Optional
+    Campaigns: Optional[List[Dict]] = None  # Set to Optional
+    Cases: Optional[List[Dict]] = None  # Set to Optional
+    Duplicates: Optional[List[Dict]] = None  # Set to Optional
+    MarketingLists: Optional[List[Dict]] = None  # Set to Optional
+    Notifications: Optional[List[Dict]] = None  # Set to Optional
+    Opportunities: Optional[List[Dict]] = None  # Set to Optional
+    Phone1: Optional[Dict] = None
+    Phone1Type: Optional[Dict] = None
+    Phone2: Optional[Dict] = None
+    Phone2Type: Optional[Dict] = None
+    Title: Optional[Dict] = None
+    UserInfo: Optional[Dict] = None
+    WebSite: Optional[Dict] = None
+    custom: Optional[Dict] = None
 
 class CurrentEmployee(BaseModel):
     AcctReferenceNbr: Optional[CustomField]
@@ -94,7 +86,7 @@ class EmployeeResponse(BaseModel):
     DateOfBirth: Optional[Dict]
     DepartmentID: Optional[Dict]
     EmployeeClassID: Optional[Dict]
-    EmployeeCost: Optional[List[Dict]]
+    EmployeeCost: Optional[List[Dict]]  # Assuming this is optional
     EmployeeID: Optional[Dict]
     EmploymentHistory: Optional[List[EmploymentHistory]]
     Name: Optional[Dict]
