@@ -84,14 +84,6 @@ class CurrentEmployee(BaseModel):
     SalesSubID: Optional[CustomField]
     TermsID: Optional[CustomField]
 
-class DefLocation(BaseModel):
-    VAPAccountID: Optional[CustomField]
-    VAPSubID: Optional[CustomField]
-    NoteID: Optional[CustomField]
-    VTaxZoneID: Optional[CustomField]
-    VPaymentMethodID: Optional[CustomField]
-    VCashAccountID: Optional[CustomField]
-
 class EmployeeResponse(BaseModel):
     id: str
     rowNumber: Optional[int]
@@ -110,4 +102,3 @@ class EmployeeResponse(BaseModel):
     ReportsToID: Optional[Dict]
     Status: Optional[Dict]
     custom: Optional[Dict]
-    DefLocation: Optional[DefLocation]
