@@ -1,75 +1,98 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 
-class CustomField(BaseModel):
-    type: Optional[str]
+class ValueField(BaseModel):
     value: Optional[str]
 
 class Address(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    AddressLine1: Optional[Dict]
-    AddressLine2: Optional[Dict]
+    AddressLine1: Optional[ValueField]
+    AddressLine2: Optional[ValueField]
     City: Optional[Dict]
-    Country: Optional[Dict]
+    Country: Optional[ValueField]
     PostalCode: Optional[Dict]
     State: Optional[Dict]
     custom: Optional[Dict]
+    files: Optional[List[Dict]]
 
 class Contact(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
     Address: Optional[Address]
-    Activities: Optional[List[Dict]] = None
-    Attributes: Optional[List[Dict]] = None
-    Campaigns: Optional[List[Dict]] = None
-    Cases: Optional[List[Dict]] = None
-    Duplicates: Optional[List[Dict]] = None
-    MarketingLists: Optional[List[Dict]] = None
-    Notifications: Optional[List[Dict]] = None
-    Opportunities: Optional[List[Dict]] = None
-    Phone1: Optional[Dict] = None
-    Phone1Type: Optional[Dict] = None
-    Phone2: Optional[Dict] = None
-    Phone2Type: Optional[Dict] = None
-    Title: Optional[Dict] = None
-    UserInfo: Optional[Dict] = None
-    WebSite: Optional[Dict] = None
-    custom: Optional[Dict] = None
-    files: Optional[List[Dict]] = None
+    DisplayName: Optional[ValueField]
+    Email: Optional[ValueField]
+    Fax: Optional[Dict]
+    FirstName: Optional[Dict]
+    LastName: Optional[ValueField]
+    MiddleName: Optional[Dict]
+    Phone1: Optional[Dict]
+    Phone1Type: Optional[ValueField]
+    Phone2: Optional[Dict]
+    Phone2Type: Optional[ValueField]
+    Title: Optional[ValueField]
+    WebSite: Optional[Dict]
+    custom: Optional[Dict]
+    files: Optional[List[Dict]]
 
 class EmploymentHistory(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    Active: Optional[Dict]
+    Active: Optional[ValueField]
     EndDate: Optional[Dict]
-    LineNbr: Optional[Dict]
-    PositionID: Optional[Dict]
-    RehireEligible: Optional[Dict]
-    StartDate: Optional[Dict]
-    StartReason: Optional[Dict]
-    Terminated: Optional[Dict]
+    LineNbr: Optional[ValueField]
+    PositionID: Optional[ValueField]
+    RehireEligible: Optional[ValueField]
+    StartDate: Optional[ValueField]
+    StartReason: Optional[ValueField]
+    Terminated: Optional[ValueField]
     TerminationReason: Optional[Dict]
     custom: Optional[Dict]
+    _links: Optional[Dict]
+    files: Optional[List[Dict]]
 
-class EmployeeResponse(BaseModel):
+class PaymentInstruction(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    BranchID: Optional[Dict]
-    Calendar: Optional[Dict]
-    CashAccount: Optional[Dict]
-    Contact: Optional[Contact]
-    CurrencyID: Optional[Dict]
-    DateOfBirth: Optional[Dict]
-    DepartmentID: Optional[Dict]
-    EmployeeClassID: Optional[Dict]
-    EmployeeID: Optional[Dict]
-    Name: Optional[Dict]
-    PaymentMethod: Optional[Dict]
-    Status: Optional[Dict]
-    EmploymentHistory: Optional[List[EmploymentHistory]]
+    BAccountID: Optional[ValueField]
+    Description: Optional[ValueField]
+    InstructionID: Optional[ValueField]
+    LocationID: Optional[ValueField]
+    PaymentMethod: Optional[ValueField]
+    Value: Optional[ValueField]
     custom: Optional[Dict]
+    files: Optional[List[Dict]]
+
+class EmployeeResponse(BaseModel):
+    id: str
+    rowNumber: Optional[int]
+    note: Optional[str]
+    BranchID: ValueField
+    Calendar: ValueField
+    CashAccount: ValueField
+    Contact: Optional[Contact]
+    CurrencyID: ValueField
+    DateOfBirth: ValueField
+    DepartmentID: ValueField
+    EmployeeClassID: ValueField
+    EmployeeID: ValueField
+    EmploymentHistory: Optional[List[EmploymentHistory]]
+    ExpenseAccount: ValueField
+    ExpenseSubaccount: ValueField
+    IdentityNumber: ValueField
+    IdentityType: ValueField
+    LastModifiedDateTime: ValueField
+    Name: ValueField
+    PaymentInstruction: Optional[List[PaymentInstruction]]
+    PaymentMethod: ValueField
+    ReportsToID: Optional[Dict]
+    SalesAccount: ValueField
+    SalesSubaccount: ValueField
+    Status: ValueField
+    custom: Optional[Dict]
+    _links: Optional[Dict]
+    files: Optional[List[Dict]]
