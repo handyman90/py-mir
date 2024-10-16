@@ -60,15 +60,13 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
             
             if existing_employee:
                 # Update existing employee logic here...
-                pass  # Update logic goes here
+                pass  # Update existing record as per your logic
             else:
                 # Create a new employee record logic here...
-                pass  # Create logic goes here
+                pass  # Create new record as per your logic
 
-            # Directly unpacking the response to the model
-            employee_data['links'] = employee_data.get('links', {})  # Ensure links field is included
-
-            return EmployeeResponse(**employee_data)
+            # Return the expected response model
+            return EmployeeResponse(**employee_data)  # Assuming employee_data matches the model structure
 
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
@@ -80,4 +78,4 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
+    uvicorn.run(app, host="0.0.0.0", port=8000)
