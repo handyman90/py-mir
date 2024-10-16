@@ -74,3 +74,4 @@ class Employee(Base):
     Status = Column(String(30), nullable=True)  # Status
     Custom = Column(String, nullable=True)  # Store custom fields
     Links = Column(String, nullable=True)  # Store links as JSON
+ 
