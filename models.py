@@ -2,10 +2,21 @@ from sqlalchemy import create_engine, Column, String, Integer, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# URL-encoded connection string with the updated password
-SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
+# Database configuration
+DATABASE_CONFIG = {
+    "username": "sa",
+    "password": "sa@121314",
+    "host": "localhost",
+    "port": "1433",
+    "database": "MiHRS",
+}
 
-# Set up the engine and session
+SQLALCHEMY_DATABASE_URL = (
+    f"mssql+pyodbc://{DATABASE_CONFIG['username']}:{DATABASE_CONFIG['password']}@"
+    f"{DATABASE_CONFIG['host']}:{DATABASE_CONFIG['port']}/{DATABASE_CONFIG['database']}?driver=ODBC+Driver+17+for+SQL+Server"
+)
+
+# Creating the database engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -14,34 +25,32 @@ Base = declarative_base()
 
 # SQLAlchemy model for the employee table
 class Employee(Base):
-    __tablename__ = 'employee'  # Table name set to 'employee'
+    __tablename__ = 'employee'
 
-    # Define the fields corresponding to the expected JSON response
-    id = Column(String(36), primary_key=True, index=True)  # Unique identifier
-    rowNumber = Column(Integer, nullable=True)  # Row number
+    id = Column(String(36), primary_key=True, index=True)  # UUID or unique identifier
+    row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
     note = Column(String, nullable=True)  # Note field
-    BranchID = Column(String(30), nullable=True)  # Branch ID
-    Calendar = Column(String(30), nullable=True)  # Calendar
-    CashAccount = Column(String(30), nullable=True)  # Cash Account
-    CurrencyID = Column(String(10), nullable=True)  # Currency ID
-    DateOfBirth = Column(DateTime, nullable=True)  # Date of Birth
-    DepartmentID = Column(String(30), nullable=True)  # Department ID
-    EmployeeClassID = Column(String(10), nullable=True)  # Employee Class ID
-    EmployeeID = Column(String(30), nullable=True)  # Employee ID
-    ExpenseAccount = Column(String(30), nullable=True)  # Expense Account
-    ExpenseSubaccount = Column(String(30), nullable=True)  # Expense Subaccount
-    IdentityNumber = Column(String(30), nullable=True)  # Identity Number
-    IdentityType = Column(String(30), nullable=True)  # Identity Type
-    LastModifiedDateTime = Column(DateTime, nullable=True)  # Last Modified DateTime
-    Name = Column(String(255), nullable=True)  # Name
-    PaymentMethod = Column(String(10), nullable=True)  # Payment Method
-    ReportsToID = Column(String(30), nullable=True)  # Reports To ID
-    SalesAccount = Column(String(30), nullable=True)  # Sales Account
-    SalesSubaccount = Column(String(30), nullable=True)  # Sales Subaccount
-    Status = Column(String(30), nullable=True)  # Status
+    branch_id = Column(String, nullable=True)  # BranchID
+    calendar = Column(String, nullable=True)  # Calendar
+    cash_account = Column(String, nullable=True)  # CashAccount
+    currency_id = Column(String, nullable=True)  # CurrencyID
+    date_of_birth = Column(DateTime, nullable=True)  # DateOfBirth
+    department_id = Column(String, nullable=True)  # DepartmentID
+    employee_class_id = Column(String, nullable=True)  # EmployeeClassID
+    employee_id = Column(String, nullable=True)  # EmployeeID
+    expense_account = Column(String, nullable=True)  # ExpenseAccount
+    expense_subaccount = Column(String, nullable=True)  # ExpenseSubaccount
+    identity_number = Column(String, nullable=True)  # IdentityNumber
+    identity_type = Column(String, nullable=True)  # IdentityType
+    last_modified_date_time = Column(DateTime, nullable=True)  # LastModifiedDateTime
+    name = Column(String, nullable=True)  # Name
+    payment_method = Column(String, nullable=True)  # PaymentMethod
+    reports_to_id = Column(String, nullable=True)  # ReportsToID
+    sales_account = Column(String, nullable=True)  # SalesAccount
+    sales_subaccount = Column(String, nullable=True)  # SalesSubaccount
+    status = Column(String, nullable=True)  # Status
     custom_fields = Column(JSON, nullable=True)  # Store custom fields as JSON
     links = Column(JSON, nullable=True)  # Store links as JSON
 
-# Create the database tables
+# Create the database tables if they don't exist
 Base.metadata.create_all(bind=engine)
- 
