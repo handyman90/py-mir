@@ -5,7 +5,7 @@ from sqlalchemy.orm import sessionmaker
 # Database configuration
 DATABASE_CONFIG = {
     "username": "sa",
-    "password": "sa@121314",
+    "password": "sa%40121314",
     "host": "localhost",
     "port": "1433",
     "database": "MiHRS",
