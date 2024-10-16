@@ -43,14 +43,14 @@ class EmploymentHistory(BaseModel):
     id: str
     rowNumber: Optional[int]
     note: Optional[str]
-    Active: ValueField  # Change to ValueField to hold 'true'/'false' as strings
+    Active: Optional[bool]  # Changed to Optional[bool]
     EndDate: Optional[Dict[str, Any]]
-    LineNbr: ValueField  # Change to ValueField to hold the line number as string
+    LineNbr: Optional[int]  # Changed to Optional[int]
     PositionID: ValueField
-    RehireEligible: ValueField  # Change to ValueField to hold 'true'/'false' as strings
+    RehireEligible: Optional[bool]  # Changed to Optional[bool]
     StartDate: ValueField
     StartReason: ValueField
-    Terminated: ValueField  # Change to ValueField to hold 'true'/'false' as strings
+    Terminated: Optional[bool]  # Changed to Optional[bool]
     TerminationReason: Optional[Dict[str, Any]]
     custom: Optional[Dict[str, Any]]
     files: Optional[List[Dict[str, Any]]]
@@ -59,10 +59,10 @@ class PaymentInstruction(BaseModel):
     id: str
     rowNumber: Optional[int]
     note: Optional[str]
-    BAccountID: ValueField  # Change to ValueField to hold as string
+    BAccountID: Optional[int]  # Changed to Optional[int]
     Description: ValueField
     InstructionID: ValueField
-    LocationID: ValueField  # Change to ValueField to hold as string
+    LocationID: Optional[int]  # Changed to Optional[int]
     PaymentMethod: ValueField
     Value: ValueField
     custom: Optional[Dict[str, Any]]
