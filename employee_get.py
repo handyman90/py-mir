@@ -71,7 +71,7 @@ def save_employee_to_db(db: Session, employee_data: EmployeeResponse):
     db.commit()
 
 # Endpoint to retrieve and save employee information
-@app.get("/organization/employee", response_model=EmployeeResponse)
+@app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
 def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
