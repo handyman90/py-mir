@@ -36,14 +36,14 @@ class Contact(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    Activities: Optional[List[Dict]] = None  # Set to Optional
-    Attributes: Optional[List[Dict]] = None  # Set to Optional
-    Campaigns: Optional[List[Dict]] = None  # Set to Optional
-    Cases: Optional[List[Dict]] = None  # Set to Optional
-    Duplicates: Optional[List[Dict]] = None  # Set to Optional
-    MarketingLists: Optional[List[Dict]] = None  # Set to Optional
-    Notifications: Optional[List[Dict]] = None  # Set to Optional
-    Opportunities: Optional[List[Dict]] = None  # Set to Optional
+    Activities: Optional[List[Dict]] = None
+    Attributes: Optional[List[Dict]] = None
+    Campaigns: Optional[List[Dict]] = None
+    Cases: Optional[List[Dict]] = None
+    Duplicates: Optional[List[Dict]] = None
+    MarketingLists: Optional[List[Dict]] = None
+    Notifications: Optional[List[Dict]] = None
+    Opportunities: Optional[List[Dict]] = None
     Phone1: Optional[Dict] = None
     Phone1Type: Optional[Dict] = None
     Phone2: Optional[Dict] = None
@@ -51,7 +51,7 @@ class Contact(BaseModel):
     Title: Optional[Dict] = None
     UserInfo: Optional[Dict] = None
     WebSite: Optional[Dict] = None
-    custom: Optional[Dict] = None
+    custom: Optional[Dict]
 
 class CurrentEmployee(BaseModel):
     AcctReferenceNbr: Optional[CustomField]
@@ -80,17 +80,17 @@ class EmployeeResponse(BaseModel):
     id: str
     rowNumber: Optional[int]
     note: Optional[str]
-    BranchID: Optional[Dict]
+    BranchID: Dict  # Required
+    CurrencyID: Dict  # Required
+    DateOfBirth: Dict  # Required
+    DepartmentID: Dict  # Required
+    EmployeeClassID: Dict  # Required
+    EmployeeID: Dict  # Required
+    Name: Dict  # Required
+    PaymentMethod: Dict  # Required
+    Status: Dict  # Required
     Contact: Optional[Contact]
-    CurrencyID: Optional[Dict]
-    DateOfBirth: Optional[Dict]
-    DepartmentID: Optional[Dict]
-    EmployeeClassID: Optional[Dict]
-    EmployeeCost: Optional[List[Dict]]  # Assuming this is optional
-    EmployeeID: Optional[Dict]
+    EmployeeCost: Optional[List[Dict]]  # Optional
     EmploymentHistory: Optional[List[EmploymentHistory]]
-    Name: Optional[Dict]
-    PaymentMethod: Optional[Dict]
     ReportsToID: Optional[Dict]
-    Status: Optional[Dict]
     custom: Optional[Dict]
