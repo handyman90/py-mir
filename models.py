@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, JSON, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -43,4 +43,4 @@ class Employee(Base):
     links = Column(JSON, nullable=True)  # Store links as JSON
 
 # Create the database tables
-Base.metadata.create_all(bind=engine)  # This will create the table with the defined columns if it doesn't exist
+Base.metadata.create_all(bind=engine)
