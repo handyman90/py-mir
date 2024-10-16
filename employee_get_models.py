@@ -96,3 +96,4 @@ class EmployeeResponse(BaseModel):
     Status: ValueField
     custom: Optional[Dict[str, Any]]
     links: Optional[Dict[str, Any]]  # To hold links in the response
+ 
