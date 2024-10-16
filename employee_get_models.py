@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 
 class ValueField(BaseModel):
-    value: Optional[str]  # Making it optional to match the response
+    value: Optional[str]
 
 class Address(BaseModel):
     id: Optional[str]
