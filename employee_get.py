@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from sqlalchemy.orm import Session
-from models import Employee, SessionLocal, Base, engine  # Adjust as necessary
+from models import Employee, SessionLocal, Base, engine
 from employee_get_models import EmployeeResponse
 from datetime import datetime
 
@@ -65,7 +65,19 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                 # Create a new employee record logic here...
                 pass  # Create logic goes here
 
-            return EmployeeResponse(**employee_data)  # Unpack the response to the model
+            # Convert boolean and integer fields to strings if necessary
+            for history in employee_data.get("EmploymentHistory", []):
+                history['Active'] = {'value': str(history['Active']['value'])}  # Convert bool to string
+                history['LineNbr'] = {'value': str(history['LineNbr']['value'])}  # Convert int to string
+                history['RehireEligible'] = {'value': str(history['RehireEligible']['value'])}  # Convert bool to string
+                history['Terminated'] = {'value': str(history['Terminated']['value'])}  # Convert bool to string
+
+            for payment in employee_data.get("PaymentInstruction", []):
+                payment['BAccountID'] = {'value': str(payment['BAccountID']['value'])}  # Convert int to string
+                payment['LocationID'] = {'value': str(payment['LocationID']['value'])}  # Convert int to string
+
+            # Directly unpacking the response to the model
+            return EmployeeResponse(**employee_data)
 
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
