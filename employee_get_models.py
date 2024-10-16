@@ -1,12 +1,12 @@
 from sqlalchemy import Column, String, Integer, DateTime, JSON
 from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, List, Dict, Any
 
-# Use the Base defined in models.py
-from models import Base
+# SQLAlchemy Base model
+Base = declarative_base()
 
-# SQLAlchemy model for the employees table
+# SQLAlchemy model for the Employee table
 class Employee(Base):
     __tablename__ = 'employees'
 
@@ -14,78 +14,123 @@ class Employee(Base):
     row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
     note = Column(String, nullable=True)  # Note field
     branch_id = Column(String, nullable=True)  # BranchID
-    calendar = Column(String, nullable=True)  # Calendar
-    cash_account = Column(String, nullable=True)  # CashAccount
     currency_id = Column(String, nullable=True)  # CurrencyID
     date_of_birth = Column(DateTime, nullable=True)  # DateOfBirth
     department_id = Column(String, nullable=True)  # DepartmentID
     employee_class_id = Column(String, nullable=True)  # EmployeeClassID
-    expense_account = Column(String, nullable=True)  # ExpenseAccount
-    expense_subaccount = Column(String, nullable=True)  # ExpenseSubaccount
-    identity_number = Column(String, nullable=True)  # IdentityNumber
-    identity_type = Column(String, nullable=True)  # IdentityType
-    last_modified_date_time = Column(DateTime, nullable=True)  # LastModifiedDateTime
     name = Column(String, nullable=True)  # Name
     payment_method = Column(String, nullable=True)  # PaymentMethod
-    reports_to_id = Column(String, nullable=True)  # ReportsToID
-    sales_account = Column(String, nullable=True)  # SalesAccount
-    sales_subaccount = Column(String, nullable=True)  # SalesSubaccount
     status = Column(String, nullable=True)  # Status
     custom_fields = Column(JSON, nullable=True)  # Store custom fields as JSON
-    links = Column(JSON, nullable=True)  # Store links as JSON
 
-# Pydantic model for the API response
-class ValueField(BaseModel):
+# Pydantic models for response structure
+class CustomField(BaseModel):
+    type: Optional[str]
     value: Optional[str]
 
-class EmployeeGetModel(BaseModel):
-    employee_id: Optional[str]
-    row_number: Optional[int]
+class Address(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
     note: Optional[str]
-    branch_id: Optional[str]
-    calendar: Optional[str]
-    cash_account: Optional[str]
-    currency_id: Optional[str]
-    date_of_birth: Optional[str]
-    department_id: Optional[str]
-    employee_class_id: Optional[str]
-    expense_account: Optional[str]
-    expense_subaccount: Optional[str]
-    identity_number: Optional[str]
-    identity_type: Optional[str]
-    last_modified_date_time: Optional[str]
-    name: Optional[str]
-    payment_method: Optional[str]
-    reports_to_id: Optional[Dict[str, Any]] = None
-    sales_account: Optional[str]
-    sales_subaccount: Optional[str]
-    status: Optional[str]
-    custom_fields: Optional[Dict[str, Any]] = None
-    links: Optional[Dict[str, Any]] = None
+    AddressLine1: Optional[Dict]
+    AddressLine2: Optional[Dict]
+    City: Optional[Dict]
+    Country: Optional[Dict]
+    PostalCode: Optional[Dict]
+    State: Optional[Dict]
+    custom: Optional[Dict]
 
-# Pydantic model for the response structure
+class EmploymentHistory(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    Active: Optional[Dict]
+    EndDate: Optional[Dict]
+    LineNbr: Optional[Dict]
+    PositionID: Optional[Dict]
+    RehireEligible: Optional[Dict]
+    StartDate: Optional[Dict]
+    StartReason: Optional[Dict]
+    Terminated: Optional[Dict]
+    TerminationReason: Optional[Dict]
+    custom: Optional[Dict]
+
+class Contact(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    Activities: Optional[List[Dict]]
+    Address: Optional[Address]
+    Attributes: Optional[List[Dict]]
+    Campaigns: Optional[List[Dict]]
+    Cases: Optional[List[Dict]]
+    DisplayName: Optional[Dict]
+    Duplicates: Optional[List[Dict]]
+    Email: Optional[Dict]
+    Fax: Optional[Dict]
+    FirstName: Optional[Dict]
+    LastName: Optional[Dict]
+    MarketingLists: Optional[List[Dict]]
+    MiddleName: Optional[Dict]
+    Notifications: Optional[List[Dict]]
+    Opportunities: Optional[List[Dict]]
+    Phone1: Optional[Dict]
+    Phone1Type: Optional[Dict]
+    Phone2: Optional[Dict]
+    Phone2Type: Optional[Dict]
+    Relations: Optional[List[Dict]]
+    Title: Optional[Dict]
+    UserInfo: Optional[Dict]
+    WebSite: Optional[Dict]
+    custom: Optional[Dict]
+
+class CurrentEmployee(BaseModel):
+    AcctReferenceNbr: Optional[CustomField]
+    UsrPlacementID: Optional[CustomField]
+    CalendarID: Optional[CustomField]
+    HoursValidation: Optional[CustomField]
+    SalesPersonID: Optional[CustomField]
+    UserID: Optional[CustomField]
+    AllowOverrideCury: Optional[CustomField]
+    CuryRateTypeID: Optional[CustomField]
+    AllowOverrideRate: Optional[CustomField]
+    LabourItemID: Optional[CustomField]
+    UnionID: Optional[CustomField]
+    RouteEmails: Optional[CustomField]
+    TimeCardRequired: Optional[CustomField]
+    NoteID: Optional[CustomField]
+    PrepaymentAcctID: Optional[CustomField]
+    PrepaymentSubID: Optional[CustomField]
+    ExpenseAcctID: Optional[CustomField]
+    ExpenseSubID: Optional[CustomField]
+    SalesAcctID: Optional[CustomField]
+    SalesSubID: Optional[CustomField]
+    TermsID: Optional[CustomField]
+
+class DefLocation(BaseModel):
+    VAPAccountID: Optional[CustomField]
+    VAPSubID: Optional[CustomField]
+    NoteID: Optional[CustomField]
+    VTaxZoneID: Optional[CustomField]
+    VPaymentMethodID: Optional[CustomField]
+    VCashAccountID: Optional[CustomField]
+
 class EmployeeResponse(BaseModel):
     id: str
-    rowNumber: Optional[int] = None
-    note: Optional[str] = None
-    BranchID: ValueField
-    Calendar: ValueField
-    CashAccount: ValueField
-    CurrencyID: ValueField
-    DateOfBirth: ValueField
-    DepartmentID: ValueField
-    EmployeeClassID: ValueField
-    EmployeeID: ValueField
-    ExpenseAccount: ValueField
-    ExpenseSubaccount: ValueField
-    IdentityNumber: ValueField
-    IdentityType: ValueField
-    LastModifiedDateTime: ValueField
-    Name: ValueField
-    PaymentMethod: ValueField
-    ReportsToID: Optional[Dict[str, Any]] = None
-    SalesAccount: ValueField
-    SalesSubaccount: ValueField
-    Status: ValueField
-    custom: Optional[Dict[str, Any]] = None
-    _links: Optional[Dict[str, Any]] = None
+    rowNumber: Optional[int]
+    note: Optional[str]
+    BranchID: Optional[Dict]
+    Contact: Optional[Contact]
+    CurrencyID: Optional[Dict]
+    DateOfBirth: Optional[Dict]
+    DepartmentID: Optional[Dict]
+    EmployeeClassID: Optional[Dict]
+    EmployeeCost: Optional[List[Dict]]
+    EmployeeID: Optional[Dict]
+    EmploymentHistory: Optional[List[EmploymentHistory]]
+    Name: Optional[Dict]
+    PaymentMethod: Optional[Dict]
+    ReportsToID: Optional[Dict]
+    Status: Optional[Dict]
+    custom: Optional[Dict]
+    DefLocation: Optional[DefLocation]
