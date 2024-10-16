@@ -73,3 +73,4 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
+ 
