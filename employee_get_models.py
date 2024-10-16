@@ -1,29 +1,6 @@
-from sqlalchemy import Column, String, Integer, DateTime, JSON
-from sqlalchemy.ext.declarative import declarative_base
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
-# SQLAlchemy Base model
-Base = declarative_base()
-
-# SQLAlchemy model for the Employee table
-class Employee(Base):
-    __tablename__ = 'employees'
-
-    employee_id = Column(String(36), primary_key=True, index=True)  # UUID or unique identifier
-    row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
-    note = Column(String, nullable=True)  # Note field
-    branch_id = Column(String, nullable=True)  # BranchID
-    currency_id = Column(String, nullable=True)  # CurrencyID
-    date_of_birth = Column(DateTime, nullable=True)  # DateOfBirth
-    department_id = Column(String, nullable=True)  # DepartmentID
-    employee_class_id = Column(String, nullable=True)  # EmployeeClassID
-    name = Column(String, nullable=True)  # Name
-    payment_method = Column(String, nullable=True)  # PaymentMethod
-    status = Column(String, nullable=True)  # Status
-    custom_fields = Column(JSON, nullable=True)  # Store custom fields as JSON
-
-# Pydantic models for response structure
 class CustomField(BaseModel):
     type: Optional[str]
     value: Optional[str]
