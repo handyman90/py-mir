@@ -51,7 +51,7 @@ class Contact(BaseModel):
     Title: Optional[Dict] = None
     UserInfo: Optional[Dict] = None
     WebSite: Optional[Dict] = None
-    custom: Optional[Dict]
+    custom: Optional[Dict] = None
 
 class CurrentEmployee(BaseModel):
     AcctReferenceNbr: Optional[CustomField]
@@ -89,8 +89,8 @@ class EmployeeResponse(BaseModel):
     Name: Dict  # Required
     PaymentMethod: Dict  # Required
     Status: Dict  # Required
-    Contact: Optional[Contact]
+    Contact: Optional[Contact]  # Optional
     EmployeeCost: Optional[List[Dict]]  # Optional
-    EmploymentHistory: Optional[List[EmploymentHistory]]
-    ReportsToID: Optional[Dict]
-    custom: Optional[Dict]
+    EmploymentHistory: Optional[List[EmploymentHistory]]  # Optional
+    ReportsToID: Optional[Dict]  # Optional
+    custom: Optional[Dict]  # Optional
