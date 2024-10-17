@@ -1,17 +1,16 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
 from models import Employee, SessionLocal
+from employee_get_models import EmployeeResponse
 from datetime import datetime
 
 app = FastAPI()
 
 # Token URL and payload for authentication
-token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
+token_url = "http://202.75.55.71/2023R1Preprod/identity/connect/token"
 
-# Function to authenticate and get a session token
 def get_auth_token() -> dict:
     payload = {
         "grant_type": "password",
@@ -30,7 +29,6 @@ def get_auth_token() -> dict:
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Dependency to get a DB session
 def get_db():
     db = SessionLocal()
     try:
@@ -38,103 +36,16 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic models for response structure
-class ValueField(BaseModel):
-    value: Optional[str]
-
-class Address(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    AddressLine1: ValueField
-    AddressLine2: ValueField
-    City: Optional[Dict]
-    Country: ValueField
-    PostalCode: Optional[Dict]
-    State: Optional[Dict]
-
-class Contact(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    DisplayName: ValueField
-    Email: ValueField
-    Fax: Optional[Dict]
-    FirstName: Optional[Dict]
-    LastName: ValueField
-    MiddleName: Optional[Dict]
-    Phone1: Optional[Dict]
-    Phone1Type: ValueField
-    Phone2: Optional[Dict]
-    Phone2Type: ValueField
-    Title: ValueField
-    Address: Address
-
-class EmploymentHistory(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    Active: ValueField
-    EndDate: Optional[Dict]
-    LineNbr: ValueField
-    PositionID: ValueField
-    RehireEligible: ValueField
-    StartDate: ValueField
-    StartReason: ValueField
-    Terminated: ValueField
-    TerminationReason: Optional[Dict]
-
-class PaymentInstruction(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    BAccountID: ValueField
-    Description: ValueField
-    InstructionID: ValueField
-    LocationID: ValueField
-    PaymentMethod: ValueField
-    Value: ValueField
-
-class EmployeeResponse(BaseModel):
-    id: str
-    rowNumber: Optional[int]
-    note: Optional[str]
-    BranchID: ValueField
-    Calendar: ValueField
-    CashAccount: ValueField
-    Contact: Contact
-    CurrencyID: ValueField
-    DateOfBirth: ValueField
-    DepartmentID: ValueField
-    EmployeeClassID: ValueField
-    EmployeeID: ValueField
-    EmploymentHistory: List[EmploymentHistory]
-    ExpenseAccount: ValueField
-    ExpenseSubaccount: ValueField
-    IdentityNumber: ValueField
-    IdentityType: ValueField
-    LastModifiedDateTime: Optional[str]
-    Name: ValueField
-    PaymentInstruction: List[PaymentInstruction]
-    PaymentMethod: ValueField
-    ReportsToID: Optional[Dict]
-    SalesAccount: ValueField
-    SalesSubaccount: ValueField
-    Status: ValueField
-    Custom: Optional[Dict]
-    Links: Optional[Dict]
-
-# Endpoint to retrieve and save employee information
 @app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: str, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
             token_response = get_auth_token()
             authorization = token_response.get("access_token")
 
-        url = f"https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee/{employee_id}?$expand=Contact/Address,EmploymentHistory,PaymentInstruction"
+        url = f"http://202.75.55.71/2023R1Preprod/entity/GRP9Default/1/Employee/{employee_id}?$expand=Contact/Address,EmploymentHistory,PaymentInstruction"
         headers = {"Authorization": f"Bearer {authorization}"}
-
+        
         response = requests.get(url, headers=headers)
 
         if response.status_code == 200:
@@ -142,9 +53,8 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
 
             # Flatten nested fields and create a new employee object or update an existing one
             employee = Employee(
-                id=employee_data.get("id"),
                 row_number=employee_data.get("rowNumber"),
-                note=employee_data.get("note", ""),
+                note=employee_data.get("note"),
                 BranchID=employee_data.get("BranchID", {}).get("value"),
                 Calendar=employee_data.get("Calendar", {}).get("value"),
                 CashAccount=employee_data.get("CashAccount", {}).get("value"),
@@ -153,10 +63,10 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 ContactNote=employee_data.get("Contact", {}).get("note"),
                 ContactDisplayName=employee_data.get("Contact", {}).get("DisplayName", {}).get("value"),
                 ContactEmail=employee_data.get("Contact", {}).get("Email", {}).get("value"),
-                ContactFax=employee_data.get("Contact", {}).get("Fax"),
-                ContactFirstName=employee_data.get("Contact", {}).get("FirstName"),
+                ContactFax=employee_data.get("Contact", {}).get("Fax", {}).get("value"),
+                ContactFirstName=employee_data.get("Contact", {}).get("FirstName", {}).get("value"),
                 ContactLastName=employee_data.get("Contact", {}).get("LastName", {}).get("value"),
-                ContactMiddleName=employee_data.get("Contact", {}).get("MiddleName"),
+                ContactMiddleName=employee_data.get("Contact", {}).get("MiddleName", {}).get("value"),
                 ContactPhone1=employee_data.get("Contact", {}).get("Phone1"),
                 ContactPhone1Type=employee_data.get("Contact", {}).get("Phone1Type", {}).get("value"),
                 ContactPhone2=employee_data.get("Contact", {}).get("Phone2"),
@@ -192,34 +102,29 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 ExpenseSubaccount=employee_data.get("ExpenseSubaccount", {}).get("value"),
                 IdentityNumber=employee_data.get("IdentityNumber", {}).get("value"),
                 IdentityType=employee_data.get("IdentityType", {}).get("value"),
-                LastModifiedDateTime=datetime.fromisoformat(employee_data.get("LastModifiedDateTime", {}).get("value").replace("Z", "+00:00")),
+                LastModifiedDateTime=employee_data.get("LastModifiedDateTime"),
                 Name=employee_data.get("Name", {}).get("value"),
                 PaymentInstructionID=employee_data.get("PaymentInstruction", [{}])[0].get("id"),
                 PaymentInstructionRowNumber=employee_data.get("PaymentInstruction", [{}])[0].get("rowNumber"),
                 PaymentInstructionNote=employee_data.get("PaymentInstruction", [{}])[0].get("note"),
                 PaymentInstructionBAccountID=employee_data.get("PaymentInstruction", [{}])[0].get("BAccountID", {}).get("value"),
                 PaymentInstructionDescription=employee_data.get("PaymentInstruction", [{}])[0].get("Description", {}).get("value"),
-                PaymentInstructionInstructionID=employee_data.get("PaymentInstruction", [{}])[0].get("InstructionID", {}).get("value"),
                 PaymentInstructionLocationID=employee_data.get("PaymentInstruction", [{}])[0].get("LocationID", {}).get("value"),
-                PaymentInstructionMethod=employee_data.get("PaymentInstruction", [{}])[0].get("PaymentMethod", {}).get("value"),
-                PaymentInstructionValue=employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
                 PaymentMethod=employee_data.get("PaymentMethod", {}).get("value"),
-                ReportsToID=employee_data.get("ReportsToID"),
+                ReportsToID=employee_data.get("ReportsToID", {}).get("value"),
                 SalesAccount=employee_data.get("SalesAccount", {}).get("value"),
                 SalesSubaccount=employee_data.get("SalesSubaccount", {}).get("value"),
                 Status=employee_data.get("Status", {}).get("value"),
-                Custom=employee_data.get("custom"),
-                Links=employee_data.get("links")
+                Custom=employee_data.get("Custom"),
+                Links=employee_data.get("Links")
             )
 
-            # Add employee to the database
+            # Write to the database
             db.add(employee)
             db.commit()
             return employee
 
-        else:
-            raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
-
+        raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
     except Exception as e:
         print(f"Exception occurred: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
