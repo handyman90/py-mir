@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict
 
 class ValueField(BaseModel):
-    value: Optional[str]  # Optional since the value can be empty
+    value: Optional[str]
 
 class Address(BaseModel):
     id: Optional[str]
@@ -58,7 +58,7 @@ class PaymentInstruction(BaseModel):
     Value: ValueField
 
 class EmployeeResponse(BaseModel):
-    id: str  # Required
+    id: str
     rowNumber: Optional[int]
     note: Optional[str]
     BranchID: ValueField
