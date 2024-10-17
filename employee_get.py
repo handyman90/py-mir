@@ -3,16 +3,14 @@ import requests
 from pydantic import BaseModel
 from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
-from models import Employee, SessionLocal
 from datetime import datetime
+from models import Employee, SessionLocal
 
 app = FastAPI()
 
-# Token URL and payload for authentication
-token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
-
 # Function to authenticate and get a session token
 def get_auth_token() -> dict:
+    token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
     payload = {
         "grant_type": "password",
         "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
@@ -21,7 +19,6 @@ def get_auth_token() -> dict:
         "username": "apiuser",
         "password": "apiuser"
     }
-    
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(token_url, data=payload, headers=headers)
 
@@ -38,41 +35,8 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic model for response structure
-class ValueField(BaseModel):
-    value: Optional[str]  # Make value optional
-
-class EmployeeResponse(BaseModel):
-    id: str
-    rowNumber: Optional[int] = None
-    note: Optional[str] = None
-    BranchID: ValueField
-    Calendar: ValueField
-    CashAccount: ValueField
-    Contact: Optional[Dict[str, Any]]  # Adjust as needed
-    CurrencyID: ValueField
-    DateOfBirth: ValueField
-    DepartmentID: ValueField
-    EmployeeClassID: ValueField
-    EmployeeID: ValueField
-    EmploymentHistory: List[Dict[str, Any]]  # Adjust as needed
-    ExpenseAccount: ValueField
-    ExpenseSubaccount: ValueField
-    IdentityNumber: ValueField
-    IdentityType: ValueField
-    LastModifiedDateTime: Optional[str] = None
-    Name: ValueField
-    PaymentInstruction: List[Dict[str, Any]]  # Adjust as needed
-    PaymentMethod: ValueField
-    ReportsToID: Optional[str] = None
-    SalesAccount: ValueField
-    SalesSubaccount: ValueField
-    Status: ValueField
-    Custom: Optional[Dict[str, Any]] = None
-    Links: Optional[Dict[str, Any]] = None
-
 # Endpoint to retrieve and save employee information to database
-@app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
+@app.get("/organization/employee/{employee_id}")
 def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
@@ -114,10 +78,10 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                 AddressNote=employee_data.get("Contact", {}).get("Address", {}).get("note"),
                 AddressLine1=employee_data.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"),
                 AddressLine2=employee_data.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"),
-                AddressCity=employee_data.get("Contact", {}).get("Address", {}).get("City"),
+                AddressCity=employee_data.get("Contact", {}).get("Address", {}).get("City", {}),
                 AddressCountry=employee_data.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"),
-                AddressPostalCode=employee_data.get("Contact", {}).get("Address", {}).get("PostalCode"),
-                AddressState=employee_data.get("Contact", {}).get("Address", {}).get("State"),
+                AddressPostalCode=employee_data.get("Contact", {}).get("Address", {}).get("PostalCode", {}),
+                AddressState=employee_data.get("Contact", {}).get("Address", {}).get("State", {}),
                 CurrencyID=employee_data.get("CurrencyID", {}).get("value"),
                 DateOfBirth=datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00")),
                 DepartmentID=employee_data.get("DepartmentID", {}).get("value"),
@@ -156,10 +120,10 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                 SalesSubaccount=employee_data.get("SalesSubaccount", {}).get("value"),
                 Status=employee_data.get("Status", {}).get("value"),
                 Custom=employee_data.get("Custom"),
-                Links=employee_data.get("Links"),
+                Links=employee_data.get("Links")
             )
 
-            # Add the employee to the database session
+            # Add the employee to the session and commit
             db.add(employee)
             db.commit()
             return employee
@@ -174,4 +138,4 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # Change this to "127.0.0.1" if you want to restrict to local only
