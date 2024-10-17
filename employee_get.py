@@ -71,8 +71,9 @@ class EmployeeResponse(BaseModel):
     Custom: Optional[Dict[str, Any]] = None
     Links: Optional[Dict[str, Any]] = None
 
+# Endpoint to retrieve and save employee information to database
 @app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: str, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
+def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
             token_response = get_auth_token()
@@ -86,7 +87,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
         if response.status_code == 200:
             employee_data = response.json()
 
-            # Flatten nested fields
+            # Flatten nested fields and create a new employee object or update an existing one
             employee = Employee(
                 id=employee_data.get("id"),
                 row_number=employee_data.get("rowNumber"),
@@ -118,7 +119,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 AddressPostalCode=employee_data.get("Contact", {}).get("Address", {}).get("PostalCode"),
                 AddressState=employee_data.get("Contact", {}).get("Address", {}).get("State"),
                 CurrencyID=employee_data.get("CurrencyID", {}).get("value"),
-                DateOfBirth=employee_data.get("DateOfBirth", {}).get("value"),
+                DateOfBirth=datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00")),
                 DepartmentID=employee_data.get("DepartmentID", {}).get("value"),
                 EmployeeClassID=employee_data.get("EmployeeClassID", {}).get("value"),
                 EmployeeID=employee_data.get("EmployeeID", {}).get("value"),
@@ -130,7 +131,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 EmploymentHistoryLineNbr=employee_data.get("EmploymentHistory", [{}])[0].get("LineNbr", {}).get("value"),
                 EmploymentHistoryPositionID=employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
                 EmploymentHistoryRehireEligible=employee_data.get("EmploymentHistory", [{}])[0].get("RehireEligible", {}).get("value"),
-                EmploymentHistoryStartDate=employee_data.get("EmploymentHistory", [{}])[0].get("StartDate"),
+                EmploymentHistoryStartDate=datetime.fromisoformat(employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value").replace("Z", "+00:00")),
                 EmploymentHistoryStartReason=employee_data.get("EmploymentHistory", [{}])[0].get("StartReason", {}).get("value"),
                 EmploymentHistoryTerminated=employee_data.get("EmploymentHistory", [{}])[0].get("Terminated", {}).get("value"),
                 EmploymentHistoryTerminationReason=employee_data.get("EmploymentHistory", [{}])[0].get("TerminationReason"),
@@ -138,7 +139,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 ExpenseSubaccount=employee_data.get("ExpenseSubaccount", {}).get("value"),
                 IdentityNumber=employee_data.get("IdentityNumber", {}).get("value"),
                 IdentityType=employee_data.get("IdentityType", {}).get("value"),
-                LastModifiedDateTime=employee_data.get("LastModifiedDateTime", {}).get("value"),
+                LastModifiedDateTime=datetime.fromisoformat(employee_data.get("LastModifiedDateTime", {}).get("value").replace("Z", "+00:00")),
                 Name=employee_data.get("Name", {}).get("value"),
                 PaymentInstructionID=employee_data.get("PaymentInstruction", [{}])[0].get("id"),
                 PaymentInstructionRowNumber=employee_data.get("PaymentInstruction", [{}])[0].get("rowNumber"),
