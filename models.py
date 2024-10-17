@@ -1,24 +1,21 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Database connection URL
+# SQLAlchemy database connection
 SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
 
-# Create engine
+# Create engine and session
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-# Create a session local class
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-# Create a declarative base class
+# Define the declarative base
 Base = declarative_base()
 
-# SQLAlchemy model for the employee table
+# Employee model reflecting your SQL table structure
 class Employee(Base):
-    __tablename__ = 'employee'
+    __tablename__ = 'employee'  # Your table name
 
-    id = Column(Integer, primary_key=True, autoincrement=True)  # Primary key
     row_number = Column(Integer, nullable=True)
     note = Column(String, nullable=True)
     BranchID = Column(String(30), nullable=True)
@@ -55,20 +52,20 @@ class Employee(Base):
     EmploymentHistoryID = Column(String(30), nullable=True)
     EmploymentHistoryRowNumber = Column(Integer, nullable=True)
     EmploymentHistoryNote = Column(String, nullable=True)
-    EmploymentHistoryActive = Column(Integer, nullable=True)
+    EmploymentHistoryActive = Column(Boolean, nullable=True)
     EmploymentHistoryEndDate = Column(DateTime, nullable=True)
     EmploymentHistoryLineNbr = Column(Integer, nullable=True)
     EmploymentHistoryPositionID = Column(String(10), nullable=True)
-    EmploymentHistoryRehireEligible = Column(Integer, nullable=True)
+    EmploymentHistoryRehireEligible = Column(Boolean, nullable=True)
     EmploymentHistoryStartDate = Column(DateTime, nullable=True)
     EmploymentHistoryStartReason = Column(String, nullable=True)
-    EmploymentHistoryTerminated = Column(Integer, nullable=True)
+    EmploymentHistoryTerminated = Column(Boolean, nullable=True)
     EmploymentHistoryTerminationReason = Column(String, nullable=True)
     ExpenseAccount = Column(String(10), nullable=True)
     ExpenseSubaccount = Column(String(10), nullable=True)
     IdentityNumber = Column(String(10), nullable=True)
     IdentityType = Column(String(10), nullable=True)
-    LastModifiedDateTime = Column(String, nullable=True)
+    LastModifiedDateTime = Column(String, nullable=True)  # Changed to String for generality
     Name = Column(String, nullable=True)
     PaymentInstructionID = Column(Integer, nullable=True)
     PaymentInstructionRowNumber = Column(Integer, nullable=True)
@@ -82,7 +79,7 @@ class Employee(Base):
     SalesSubaccount = Column(String(30), nullable=True)
     Status = Column(String(10), nullable=True)
     Custom = Column(String, nullable=True)  # Store custom fields
-    Links = Column(String, nullable=True)  # Store links as JSON
+    Links = Column(String, nullable=True)   # Store links as JSON
 
-# Create all tables in the database
+# Create the database tables
 Base.metadata.create_all(bind=engine)
