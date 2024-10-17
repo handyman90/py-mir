@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import Optional, List, Dict, Any
 
 class ValueField(BaseModel):
     value: Optional[str]
@@ -8,54 +8,54 @@ class Address(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    AddressLine1: Optional[ValueField]
-    AddressLine2: Optional[ValueField]
-    City: Optional[str]
-    Country: Optional[ValueField]
-    PostalCode: Optional[str]
-    State: Optional[str]
+    AddressLine1: ValueField
+    AddressLine2: ValueField
+    City: Optional[Dict]
+    Country: ValueField
+    PostalCode: Optional[Dict]
+    State: Optional[Dict]
 
 class Contact(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    DisplayName: Optional[ValueField]
-    Email: Optional[ValueField]
-    Fax: Optional[str]
-    FirstName: Optional[str]
-    LastName: Optional[ValueField]
-    MiddleName: Optional[str]
-    Phone1: Optional[str]
-    Phone1Type: Optional[ValueField]
-    Phone2: Optional[str]
-    Phone2Type: Optional[ValueField]
-    Title: Optional[ValueField]
-    Address: Optional[Address]
+    DisplayName: ValueField
+    Email: ValueField
+    Fax: Optional[Dict]
+    FirstName: Optional[Dict]
+    LastName: ValueField
+    MiddleName: Optional[Dict]
+    Phone1: Optional[Dict]
+    Phone1Type: ValueField
+    Phone2: Optional[Dict]
+    Phone2Type: ValueField
+    Title: ValueField
+    Address: Address
 
 class EmploymentHistory(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    Active: Optional[ValueField]
-    EndDate: Optional[str]
-    LineNbr: Optional[ValueField]
-    PositionID: Optional[ValueField]
-    RehireEligible: Optional[ValueField]
-    StartDate: Optional[ValueField]
-    StartReason: Optional[ValueField]
-    Terminated: Optional[ValueField]
-    TerminationReason: Optional[str]
+    Active: ValueField
+    EndDate: Optional[Dict]
+    LineNbr: ValueField
+    PositionID: ValueField
+    RehireEligible: ValueField
+    StartDate: ValueField
+    StartReason: ValueField
+    Terminated: ValueField
+    TerminationReason: Optional[Dict]
 
 class PaymentInstruction(BaseModel):
     id: Optional[str]
     rowNumber: Optional[int]
     note: Optional[str]
-    BAccountID: Optional[ValueField]
-    Description: Optional[ValueField]
-    InstructionID: Optional[ValueField]
-    LocationID: Optional[ValueField]
-    PaymentMethod: Optional[ValueField]
-    Value: Optional[ValueField]
+    BAccountID: ValueField
+    Description: ValueField
+    InstructionID: ValueField
+    LocationID: ValueField
+    PaymentMethod: ValueField
+    Value: ValueField
 
 class EmployeeResponse(BaseModel):
     id: str
@@ -64,7 +64,7 @@ class EmployeeResponse(BaseModel):
     BranchID: ValueField
     Calendar: ValueField
     CashAccount: ValueField
-    Contact: Optional[Contact]
+    Contact: Contact
     CurrencyID: ValueField
     DateOfBirth: ValueField
     DepartmentID: ValueField
@@ -79,9 +79,9 @@ class EmployeeResponse(BaseModel):
     Name: ValueField
     PaymentInstruction: List[PaymentInstruction]
     PaymentMethod: ValueField
-    ReportsToID: Optional[str]
+    ReportsToID: Optional[Dict]
     SalesAccount: ValueField
     SalesSubaccount: ValueField
     Status: ValueField
-    Custom: Optional[Dict[str, Any]]
-    Links: Optional[Dict[str, Any]]
+    Custom: Optional[Dict]
+    Links: Optional[Dict]
