@@ -1,22 +1,22 @@
-from sqlalchemy import create_engine, Column, String, Integer, DateTime, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, JSON, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-# Database connection URL
-SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
-
-# Create the database engine
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-
-# Create a session local
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Declare the base
+# SQLAlchemy base class
 Base = declarative_base()
 
-# SQLAlchemy model for the employee table
+# SQLAlchemy database connection URL
+SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
+
+# Create engine
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
+# SessionLocal for database session management
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Define the Employee model based on the expected JSON structure
 class Employee(Base):
-    __tablename__ = 'employee'
+    __tablename__ = 'employee'  # Name of the table
 
     id = Column(String(36), primary_key=True, index=True)  # UUID or unique identifier
     row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
@@ -87,5 +87,9 @@ class Employee(Base):
     Custom = Column(String, nullable=True)  # Store custom fields
     Links = Column(String, nullable=True)  # Store links as JSON
 
-# Create all tables in the database
-Base.metadata.create_all(bind=engine)
+# Create the tables in the database
+def create_tables():
+    Base.metadata.create_all(bind=engine)
+
+# Call to create the tables
+create_tables()
