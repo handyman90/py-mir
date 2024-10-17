@@ -1,5 +1,6 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean
+from sqlalchemy import Column, String, Integer, DateTime, Boolean, create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 # Use a declarative base to define the database models
 Base = declarative_base()
@@ -64,5 +65,14 @@ class Employee(Base):
     PaymentMethod = Column(String(10), nullable=True)  # PaymentMethod
     Status = Column(String(30), nullable=True)  # Status
 
-# Update the database URL to include your credentials
+# SQLAlchemy connection string to your SQL Server
 SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/employee?driver=ODBC+Driver+17+for+SQL+Server"
+
+# Create a SQLAlchemy engine
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
+# Create a configured "Session" class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create the database tables
+Base.metadata.create_all(bind=engine)
