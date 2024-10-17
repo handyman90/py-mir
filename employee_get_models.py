@@ -41,7 +41,7 @@ class EmploymentHistory(BaseModel):
     LineNbr: Optional[ValueField]
     PositionID: Optional[ValueField]
     RehireEligible: Optional[ValueField]
-    StartDate: Optional[str]
+    StartDate: Optional[ValueField]
     StartReason: Optional[ValueField]
     Terminated: Optional[ValueField]
     TerminationReason: Optional[str]
@@ -59,29 +59,29 @@ class PaymentInstruction(BaseModel):
 
 class EmployeeResponse(BaseModel):
     id: str
-    rowNumber: Optional[int] = None
-    note: Optional[str] = None
-    BranchID: Optional[ValueField]
-    Calendar: Optional[ValueField]
-    CashAccount: Optional[ValueField]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    BranchID: ValueField
+    Calendar: ValueField
+    CashAccount: ValueField
     Contact: Optional[Contact]
-    CurrencyID: Optional[ValueField]
-    DateOfBirth: Optional[ValueField]
-    DepartmentID: Optional[ValueField]
-    EmployeeClassID: Optional[ValueField]
-    EmployeeID: Optional[ValueField]
+    CurrencyID: ValueField
+    DateOfBirth: ValueField
+    DepartmentID: ValueField
+    EmployeeClassID: ValueField
+    EmployeeID: ValueField
     EmploymentHistory: List[EmploymentHistory]
-    ExpenseAccount: Optional[ValueField]
-    ExpenseSubaccount: Optional[ValueField]
-    IdentityNumber: Optional[ValueField]
-    IdentityType: Optional[ValueField]
-    LastModifiedDateTime: Optional[str] = None
-    Name: Optional[ValueField]
+    ExpenseAccount: ValueField
+    ExpenseSubaccount: ValueField
+    IdentityNumber: ValueField
+    IdentityType: ValueField
+    LastModifiedDateTime: Optional[str]
+    Name: ValueField
     PaymentInstruction: List[PaymentInstruction]
-    PaymentMethod: Optional[ValueField]
-    ReportsToID: Optional[str] = None
-    SalesAccount: Optional[ValueField]
-    SalesSubaccount: Optional[ValueField]
-    Status: Optional[ValueField]
-    Custom: Optional[Dict[str, Any]] = None
-    Links: Optional[Dict[str, Any]] = None
+    PaymentMethod: ValueField
+    ReportsToID: Optional[str]
+    SalesAccount: ValueField
+    SalesSubaccount: ValueField
+    Status: ValueField
+    Custom: Optional[Dict[str, Any]]
+    Links: Optional[Dict[str, Any]]
