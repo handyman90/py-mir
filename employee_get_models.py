@@ -2,7 +2,7 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict
 
 class ValueField(BaseModel):
-    value: Optional[str]  # Each field is optional to accommodate missing data
+    value: Optional[str]
 
 class Address(BaseModel):
     id: Optional[str]
