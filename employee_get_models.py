@@ -2,54 +2,57 @@ from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 
 class ValueField(BaseModel):
-    value: Optional[str]
+    value: Optional[str]  # Make value optional
 
-class Address(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    AddressLine1: ValueField
-    AddressLine2: ValueField
-    City: Optional[Dict[str, Any]]
-    Country: ValueField
-    PostalCode: Optional[Dict[str, Any]]
-    State: Optional[Dict[str, Any]]
+class Link(BaseModel):
+    self: Optional[str]
+    files_put: Optional[str]
 
 class Contact(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
+    id: str
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
     DisplayName: ValueField
     Email: ValueField
-    Fax: Optional[Dict[str, Any]]
-    FirstName: Optional[Dict[str, Any]]
+    Fax: ValueField
+    FirstName: ValueField
     LastName: ValueField
-    MiddleName: Optional[Dict[str, Any]]
-    Phone1: Optional[Dict[str, Any]]
+    MiddleName: ValueField
+    Phone1: ValueField
     Phone1Type: ValueField
-    Phone2: Optional[Dict[str, Any]]
+    Phone2: ValueField
     Phone2Type: ValueField
     Title: ValueField
-    Address: Address
+
+class Address(BaseModel):
+    id: str
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
+    AddressLine1: ValueField
+    AddressLine2: ValueField
+    City: ValueField
+    Country: ValueField
+    PostalCode: ValueField
+    State: ValueField
 
 class EmploymentHistory(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
+    id: str
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
     Active: ValueField
-    EndDate: Optional[Dict[str, Any]]
+    EndDate: Optional[Dict[str, Any]] = None
     LineNbr: ValueField
     PositionID: ValueField
     RehireEligible: ValueField
     StartDate: ValueField
     StartReason: ValueField
     Terminated: ValueField
-    TerminationReason: Optional[Dict[str, Any]]
+    TerminationReason: Optional[Dict[str, Any]] = None
 
 class PaymentInstruction(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
+    id: str
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
     BAccountID: ValueField
     Description: ValueField
     InstructionID: ValueField
@@ -59,8 +62,8 @@ class PaymentInstruction(BaseModel):
 
 class EmployeeResponse(BaseModel):
     id: str
-    rowNumber: Optional[int]
-    note: Optional[str]
+    rowNumber: Optional[int] = None
+    note: Optional[str] = None
     BranchID: ValueField
     Calendar: ValueField
     CashAccount: ValueField
@@ -78,9 +81,10 @@ class EmployeeResponse(BaseModel):
     LastModifiedDateTime: ValueField
     Name: ValueField
     PaymentInstruction: List[PaymentInstruction]
-    ReportsToID: Optional[Dict[str, Any]]
+    PaymentMethod: ValueField
+    ReportsToID: Optional[str] = None
     SalesAccount: ValueField
     SalesSubaccount: ValueField
     Status: ValueField
-    custom: Optional[Dict[str, Any]]
-    links: Optional[Dict[str, Any]]
+    custom: Optional[Dict[str, Any]] = None
+    links: Link
