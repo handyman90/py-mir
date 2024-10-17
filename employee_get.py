@@ -1,9 +1,9 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import Optional, List, Dict, Any
 from sqlalchemy.orm import Session
-from models import SessionLocal, Employee
+from models import Employee, SessionLocal
 from datetime import datetime
 
 app = FastAPI()
@@ -42,6 +42,59 @@ def get_db():
 class ValueField(BaseModel):
     value: Optional[str]
 
+class Address(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    AddressLine1: ValueField
+    AddressLine2: ValueField
+    City: Optional[Dict]
+    Country: ValueField
+    PostalCode: Optional[Dict]
+    State: Optional[Dict]
+
+class Contact(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    DisplayName: ValueField
+    Email: ValueField
+    Fax: Optional[Dict]
+    FirstName: Optional[Dict]
+    LastName: ValueField
+    MiddleName: Optional[Dict]
+    Phone1: Optional[Dict]
+    Phone1Type: ValueField
+    Phone2: Optional[Dict]
+    Phone2Type: ValueField
+    Title: ValueField
+    Address: Address
+
+class EmploymentHistory(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    Active: ValueField
+    EndDate: Optional[Dict]
+    LineNbr: ValueField
+    PositionID: ValueField
+    RehireEligible: ValueField
+    StartDate: ValueField
+    StartReason: ValueField
+    Terminated: ValueField
+    TerminationReason: Optional[Dict]
+
+class PaymentInstruction(BaseModel):
+    id: Optional[str]
+    rowNumber: Optional[int]
+    note: Optional[str]
+    BAccountID: ValueField
+    Description: ValueField
+    InstructionID: ValueField
+    LocationID: ValueField
+    PaymentMethod: ValueField
+    Value: ValueField
+
 class EmployeeResponse(BaseModel):
     id: str
     rowNumber: Optional[int]
@@ -49,31 +102,31 @@ class EmployeeResponse(BaseModel):
     BranchID: ValueField
     Calendar: ValueField
     CashAccount: ValueField
-    Contact: Dict[str, Any]
+    Contact: Contact
     CurrencyID: ValueField
     DateOfBirth: ValueField
     DepartmentID: ValueField
     EmployeeClassID: ValueField
     EmployeeID: ValueField
-    EmploymentHistory: List[Dict[str, Any]]
+    EmploymentHistory: List[EmploymentHistory]
     ExpenseAccount: ValueField
     ExpenseSubaccount: ValueField
     IdentityNumber: ValueField
     IdentityType: ValueField
     LastModifiedDateTime: Optional[str]
     Name: ValueField
-    PaymentInstruction: List[Dict[str, Any]]
+    PaymentInstruction: List[PaymentInstruction]
     PaymentMethod: ValueField
-    ReportsToID: Optional[Dict[str, Any]]
+    ReportsToID: Optional[Dict]
     SalesAccount: ValueField
     SalesSubaccount: ValueField
     Status: ValueField
-    Custom: Optional[Dict[str, Any]]
-    Links: Optional[Dict[str, Any]]
+    Custom: Optional[Dict]
+    Links: Optional[Dict]
 
-# Endpoint to retrieve and save employee information to database
+# Endpoint to retrieve and save employee information
 @app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
+def get_employee(employee_id: str, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
     try:
         if authorization is None:
             token_response = get_auth_token()
@@ -86,12 +139,12 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
 
         if response.status_code == 200:
             employee_data = response.json()
-            
+
             # Flatten nested fields and create a new employee object or update an existing one
             employee = Employee(
                 id=employee_data.get("id"),
                 row_number=employee_data.get("rowNumber"),
-                note=employee_data.get("note"),
+                note=employee_data.get("note", ""),
                 BranchID=employee_data.get("BranchID", {}).get("value"),
                 Calendar=employee_data.get("Calendar", {}).get("value"),
                 CashAccount=employee_data.get("CashAccount", {}).get("value"),
@@ -123,46 +176,45 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
                 DepartmentID=employee_data.get("DepartmentID", {}).get("value"),
                 EmployeeClassID=employee_data.get("EmployeeClassID", {}).get("value"),
                 EmployeeID=employee_data.get("EmployeeID", {}).get("value"),
-                EmploymentHistoryID=employee_data.get("EmploymentHistory", [])[0].get("id") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryRowNumber=employee_data.get("EmploymentHistory", [])[0].get("rowNumber") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryNote=employee_data.get("EmploymentHistory", [])[0].get("note") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryActive=employee_data.get("EmploymentHistory", [])[0].get("Active", {}).get("value") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryEndDate=employee_data.get("EmploymentHistory", [])[0].get("EndDate"),
-                EmploymentHistoryLineNbr=employee_data.get("EmploymentHistory", [])[0].get("LineNbr", {}).get("value") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryPositionID=employee_data.get("EmploymentHistory", [])[0].get("PositionID", {}).get("value") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryRehireEligible=employee_data.get("EmploymentHistory", [])[0].get("RehireEligible", {}).get("value") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryStartDate=employee_data.get("EmploymentHistory", [])[0].get("StartDate", {}).get("value") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryStartReason=employee_data.get("EmploymentHistory", [])[0].get("StartReason", {}).get("value") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryTerminated=employee_data.get("EmploymentHistory", [])[0].get("Terminated", {}).get("value") if employee_data.get("EmploymentHistory") else None,
-                EmploymentHistoryTerminationReason=employee_data.get("EmploymentHistory", [])[0].get("TerminationReason", {}).get("value") if employee_data.get("EmploymentHistory") else None,
+                EmploymentHistoryID=employee_data.get("EmploymentHistory", [{}])[0].get("id"),
+                EmploymentHistoryRowNumber=employee_data.get("EmploymentHistory", [{}])[0].get("rowNumber"),
+                EmploymentHistoryNote=employee_data.get("EmploymentHistory", [{}])[0].get("note"),
+                EmploymentHistoryActive=employee_data.get("EmploymentHistory", [{}])[0].get("Active", {}).get("value"),
+                EmploymentHistoryEndDate=employee_data.get("EmploymentHistory", [{}])[0].get("EndDate"),
+                EmploymentHistoryLineNbr=employee_data.get("EmploymentHistory", [{}])[0].get("LineNbr", {}).get("value"),
+                EmploymentHistoryPositionID=employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
+                EmploymentHistoryRehireEligible=employee_data.get("EmploymentHistory", [{}])[0].get("RehireEligible", {}).get("value"),
+                EmploymentHistoryStartDate=employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
+                EmploymentHistoryStartReason=employee_data.get("EmploymentHistory", [{}])[0].get("StartReason", {}).get("value"),
+                EmploymentHistoryTerminated=employee_data.get("EmploymentHistory", [{}])[0].get("Terminated", {}).get("value"),
+                EmploymentHistoryTerminationReason=employee_data.get("EmploymentHistory", [{}])[0].get("TerminationReason"),
                 ExpenseAccount=employee_data.get("ExpenseAccount", {}).get("value"),
                 ExpenseSubaccount=employee_data.get("ExpenseSubaccount", {}).get("value"),
                 IdentityNumber=employee_data.get("IdentityNumber", {}).get("value"),
                 IdentityType=employee_data.get("IdentityType", {}).get("value"),
                 LastModifiedDateTime=datetime.fromisoformat(employee_data.get("LastModifiedDateTime", {}).get("value").replace("Z", "+00:00")),
                 Name=employee_data.get("Name", {}).get("value"),
-                PaymentInstructionID=employee_data.get("PaymentInstruction", [])[0].get("id") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionRowNumber=employee_data.get("PaymentInstruction", [])[0].get("rowNumber") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionNote=employee_data.get("PaymentInstruction", [])[0].get("note") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionBAccountID=employee_data.get("PaymentInstruction", [])[0].get("BAccountID", {}).get("value") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionDescription=employee_data.get("PaymentInstruction", [])[0].get("Description", {}).get("value") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionInstructionID=employee_data.get("PaymentInstruction", [])[0].get("InstructionID", {}).get("value") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionLocationID=employee_data.get("PaymentInstruction", [])[0].get("LocationID", {}).get("value") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionMethod=employee_data.get("PaymentInstruction", [])[0].get("PaymentMethod", {}).get("value") if employee_data.get("PaymentInstruction") else None,
-                PaymentInstructionValue=employee_data.get("PaymentInstruction", [])[0].get("Value", {}).get("value") if employee_data.get("PaymentInstruction") else None,
+                PaymentInstructionID=employee_data.get("PaymentInstruction", [{}])[0].get("id"),
+                PaymentInstructionRowNumber=employee_data.get("PaymentInstruction", [{}])[0].get("rowNumber"),
+                PaymentInstructionNote=employee_data.get("PaymentInstruction", [{}])[0].get("note"),
+                PaymentInstructionBAccountID=employee_data.get("PaymentInstruction", [{}])[0].get("BAccountID", {}).get("value"),
+                PaymentInstructionDescription=employee_data.get("PaymentInstruction", [{}])[0].get("Description", {}).get("value"),
+                PaymentInstructionInstructionID=employee_data.get("PaymentInstruction", [{}])[0].get("InstructionID", {}).get("value"),
+                PaymentInstructionLocationID=employee_data.get("PaymentInstruction", [{}])[0].get("LocationID", {}).get("value"),
+                PaymentInstructionMethod=employee_data.get("PaymentInstruction", [{}])[0].get("PaymentMethod", {}).get("value"),
+                PaymentInstructionValue=employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
                 PaymentMethod=employee_data.get("PaymentMethod", {}).get("value"),
-                ReportsToID=employee_data.get("ReportsToID", {}).get("value"),
+                ReportsToID=employee_data.get("ReportsToID"),
                 SalesAccount=employee_data.get("SalesAccount", {}).get("value"),
                 SalesSubaccount=employee_data.get("SalesSubaccount", {}).get("value"),
                 Status=employee_data.get("Status", {}).get("value"),
-                Custom=employee_data.get("Custom"),
-                Links=employee_data.get("Links")
+                Custom=employee_data.get("custom"),
+                Links=employee_data.get("links")
             )
-            
-            # Add or update the employee in the database
+
+            # Add employee to the database
             db.add(employee)
             db.commit()
-
             return employee
 
         else:
