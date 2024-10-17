@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 
 class ValueField(BaseModel):
-    value: Optional[str]  # Make value optional
+    value: Optional[str]
 
 class Address(BaseModel):
     id: Optional[str]
@@ -33,7 +33,6 @@ class Contact(BaseModel):
     Phone2: Optional[Dict]
     Phone2Type: ValueField
     Title: ValueField
-    WebSite: Optional[Dict]
     custom: Optional[Dict]
     files: List[Dict]
 
