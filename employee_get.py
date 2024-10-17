@@ -1,14 +1,14 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
-from sqlalchemy.orm import Session
-from models import SessionLocal, Employee
-from employee_get_models import EmployeeResponse
 import requests
+from sqlalchemy.orm import Session
+from models import SessionLocal
+from employee_get_models import EmployeeResponse
 from datetime import datetime
 from typing import Optional
 
 app = FastAPI()
 
-# Dependency to get the database session
+# Dependency to get a DB session
 def get_db():
     db = SessionLocal()
     try:
@@ -35,15 +35,8 @@ def get_auth_token():
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Helper function to parse date fields safely
-def parse_date(date_str):
-    try:
-        return datetime.fromisoformat(date_str.replace("Z", "+00:00"))
-    except Exception:
-        return None
-
 # Endpoint to retrieve and save employee information
-@app.get("/organization/employee", response_model=EmployeeResponse)
+@app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
 def get_employee(employee_id: str, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
     if not authorization:
         token_response = get_auth_token()
@@ -130,10 +123,11 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
         db.commit()
 
         return employee_data
-    else:
+   else:
+        print(f"Error fetching data for Employee ID {employee_id}: {response.status_code}, {response.json()}")
         raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
 
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
+    uvicorn.run(app, host="0.0.0.0", port=8000)
