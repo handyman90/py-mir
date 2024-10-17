@@ -1,11 +1,24 @@
-from sqlalchemy import Column, String, Integer, DateTime, Boolean
+from sqlalchemy import create_engine, Column, String, Integer, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker
+from pydantic import BaseModel
+from typing import Optional, Dict, Any
 
+# Database connection settings
+SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
+
+# Create an engine
+engine = create_engine(SQLALCHEMY_DATABASE_URL)
+
+# Create a configured "Session" class
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+# Create a Base class for declarative class definitions
 Base = declarative_base()
 
-# SQLAlchemy model for the employee table
+# SQLAlchemy model for Employee
 class Employee(Base):
-    __tablename__ = 'employee'  # Table name
+    __tablename__ = 'employee'
 
     id = Column(String(36), primary_key=True, index=True)  # UUID or unique identifier
     row_number = Column(Integer, nullable=True)  # Corresponds to rowNumber
@@ -75,3 +88,6 @@ class Employee(Base):
     Status = Column(String(30), nullable=True)  # Status
     Custom = Column(String, nullable=True)  # Store custom fields
     Links = Column(String, nullable=True)  # Store links as JSON
+
+# Create the database tables
+Base.metadata.create_all(bind=engine)
