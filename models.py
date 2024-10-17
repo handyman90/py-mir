@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, DateTime
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Boolean
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
@@ -18,6 +18,7 @@ Base = declarative_base()
 class Employee(Base):
     __tablename__ = 'employee'
 
+    id = Column(Integer, primary_key=True, autoincrement=True)  # Primary key
     row_number = Column(Integer, nullable=True)
     note = Column(String, nullable=True)
     BranchID = Column(String(30), nullable=True)
