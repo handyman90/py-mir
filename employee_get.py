@@ -1,13 +1,10 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 from sqlalchemy.orm import Session
-from models import Employee, SessionLocal, init_db
+from models import Employee, SessionLocal
 from datetime import datetime
-
-# Initialize database and create tables
-init_db()
 
 app = FastAPI()
 
@@ -24,7 +21,7 @@ def get_auth_token() -> dict:
         "username": "apiuser",
         "password": "apiuser"
     }
-
+    
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     response = requests.post(token_url, data=payload, headers=headers)
 
@@ -41,7 +38,7 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic models for response structure
+# Pydantic model for response structure
 class ValueField(BaseModel):
     value: Optional[str]  # Make value optional
 
@@ -52,61 +49,20 @@ class EmployeeResponse(BaseModel):
     BranchID: ValueField
     Calendar: ValueField
     CashAccount: ValueField
-    ContactID: str
-    ContactRowNumber: Optional[int] = None
-    ContactNote: Optional[str] = None
-    ContactDisplayName: Optional[str] = None
-    ContactEmail: Optional[str] = None
-    ContactFax: Optional[str] = None
-    ContactFirstName: Optional[str] = None
-    ContactLastName: ValueField
-    ContactMiddleName: Optional[str] = None
-    ContactPhone1: Optional[str] = None
-    ContactPhone1Type: Optional[ValueField] = None
-    ContactPhone2: Optional[str] = None
-    ContactPhone2Type: Optional[ValueField] = None
-    ContactTitle: Optional[ValueField] = None
-    AddressID: Optional[str] = None
-    AddressRowNumber: Optional[int] = None
-    AddressNote: Optional[str] = None
-    AddressLine1: Optional[ValueField] = None
-    AddressLine2: Optional[ValueField] = None
-    AddressCity: Optional[str] = None
-    AddressCountry: Optional[ValueField] = None
-    AddressPostalCode: Optional[str] = None
-    AddressState: Optional[str] = None
+    Contact: Optional[Dict[str, Any]]  # Adjust as needed
     CurrencyID: ValueField
     DateOfBirth: ValueField
     DepartmentID: ValueField
     EmployeeClassID: ValueField
     EmployeeID: ValueField
-    EmploymentHistoryID: Optional[str] = None
-    EmploymentHistoryRowNumber: Optional[int] = None
-    EmploymentHistoryNote: Optional[str] = None
-    EmploymentHistoryActive: Optional[bool] = None
-    EmploymentHistoryEndDate: Optional[str] = None
-    EmploymentHistoryLineNbr: Optional[int] = None
-    EmploymentHistoryPositionID: Optional[ValueField] = None
-    EmploymentHistoryRehireEligible: Optional[bool] = None
-    EmploymentHistoryStartDate: Optional[str] = None
-    EmploymentHistoryStartReason: Optional[ValueField] = None
-    EmploymentHistoryTerminated: Optional[bool] = None
-    EmploymentHistoryTerminationReason: Optional[str] = None
+    EmploymentHistory: List[Dict[str, Any]]  # Adjust as needed
     ExpenseAccount: ValueField
     ExpenseSubaccount: ValueField
     IdentityNumber: ValueField
     IdentityType: ValueField
     LastModifiedDateTime: Optional[str] = None
     Name: ValueField
-    PaymentInstructionID: Optional[str] = None
-    PaymentInstructionRowNumber: Optional[int] = None
-    PaymentInstructionNote: Optional[str] = None
-    PaymentInstructionBAccountID: Optional[int] = None
-    PaymentInstructionDescription: Optional[ValueField] = None
-    PaymentInstructionInstructionID: Optional[str] = None
-    PaymentInstructionLocationID: Optional[int] = None
-    PaymentInstructionMethod: ValueField
-    PaymentInstructionValue: Optional[str] = None
+    PaymentInstruction: List[Dict[str, Any]]  # Adjust as needed
     PaymentMethod: ValueField
     ReportsToID: Optional[str] = None
     SalesAccount: ValueField
@@ -198,14 +154,15 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 SalesAccount=employee_data.get("SalesAccount", {}).get("value"),
                 SalesSubaccount=employee_data.get("SalesSubaccount", {}).get("value"),
                 Status=employee_data.get("Status", {}).get("value"),
-                Custom=employee_data.get("custom", {}),
-                Links=employee_data.get("_links", {})
+                Custom=employee_data.get("Custom"),
+                Links=employee_data.get("Links"),
             )
-            
-            # Add to the database session
+
+            # Add the employee to the database session
             db.add(employee)
             db.commit()
             return employee
+
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
 
