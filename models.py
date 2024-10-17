@@ -16,6 +16,7 @@ Base = declarative_base()
 class Employee(Base):
     __tablename__ = 'employee'  # Your table name
 
+    id = Column(Integer, primary_key=True, autoincrement=True)  # Primary key, auto-incrementing
     row_number = Column(Integer, nullable=True)
     note = Column(String, nullable=True)
     BranchID = Column(String(30), nullable=True)
@@ -52,20 +53,20 @@ class Employee(Base):
     EmploymentHistoryID = Column(String(30), nullable=True)
     EmploymentHistoryRowNumber = Column(Integer, nullable=True)
     EmploymentHistoryNote = Column(String, nullable=True)
-    EmploymentHistoryActive = Column(Boolean, nullable=True)
+    EmploymentHistoryActive = Column(Integer, nullable=True)  # Use Integer for True/False
     EmploymentHistoryEndDate = Column(DateTime, nullable=True)
     EmploymentHistoryLineNbr = Column(Integer, nullable=True)
     EmploymentHistoryPositionID = Column(String(10), nullable=True)
-    EmploymentHistoryRehireEligible = Column(Boolean, nullable=True)
+    EmploymentHistoryRehireEligible = Column(Integer, nullable=True)  # Use Integer for True/False
     EmploymentHistoryStartDate = Column(DateTime, nullable=True)
     EmploymentHistoryStartReason = Column(String, nullable=True)
-    EmploymentHistoryTerminated = Column(Boolean, nullable=True)
+    EmploymentHistoryTerminated = Column(Integer, nullable=True)  # Use Integer for True/False
     EmploymentHistoryTerminationReason = Column(String, nullable=True)
     ExpenseAccount = Column(String(10), nullable=True)
     ExpenseSubaccount = Column(String(10), nullable=True)
     IdentityNumber = Column(String(10), nullable=True)
     IdentityType = Column(String(10), nullable=True)
-    LastModifiedDateTime = Column(String, nullable=True)  # Changed to String for generality
+    LastModifiedDateTime = Column(String, nullable=True)
     Name = Column(String, nullable=True)
     PaymentInstructionID = Column(Integer, nullable=True)
     PaymentInstructionRowNumber = Column(Integer, nullable=True)
