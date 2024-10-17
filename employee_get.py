@@ -1,10 +1,13 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
-from models import Employee, SessionLocal
+from models import Employee, SessionLocal, init_db
 from datetime import datetime
+
+# Initialize database and create tables
+init_db()
 
 app = FastAPI()
 
@@ -42,67 +45,6 @@ def get_db():
 class ValueField(BaseModel):
     value: Optional[str]  # Make value optional
 
-class Address(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    AddressLine1: ValueField
-    AddressLine2: ValueField
-    City: Optional[Dict]
-    Country: ValueField
-    PostalCode: Optional[Dict]
-    State: Optional[Dict]
-    custom: Optional[Dict]
-    files: List[Dict]
-
-class Contact(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    Address: Address
-    DisplayName: ValueField
-    Email: ValueField
-    Fax: Optional[Dict]
-    FirstName: Optional[Dict]
-    LastName: ValueField
-    MiddleName: Optional[Dict]
-    Phone1: Optional[Dict]
-    Phone1Type: ValueField
-    Phone2: Optional[Dict]
-    Phone2Type: ValueField
-    Title: ValueField
-    custom: Optional[Dict]
-    files: List[Dict]
-
-class EmploymentHistory(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    Active: ValueField
-    EndDate: Optional[Dict]
-    LineNbr: ValueField
-    PositionID: ValueField
-    RehireEligible: ValueField
-    StartDate: ValueField
-    StartReason: ValueField
-    Terminated: ValueField
-    TerminationReason: Optional[Dict]
-    custom: Optional[Dict]
-    files: List[Dict]
-
-class PaymentInstruction(BaseModel):
-    id: Optional[str]
-    rowNumber: Optional[int]
-    note: Optional[str]
-    BAccountID: ValueField
-    Description: ValueField
-    InstructionID: ValueField
-    LocationID: ValueField
-    PaymentMethod: ValueField
-    Value: ValueField
-    custom: Optional[Dict]
-    files: List[Dict]
-
 class EmployeeResponse(BaseModel):
     id: str
     rowNumber: Optional[int] = None
@@ -110,29 +52,69 @@ class EmployeeResponse(BaseModel):
     BranchID: ValueField
     Calendar: ValueField
     CashAccount: ValueField
-    Contact: Contact
+    ContactID: str
+    ContactRowNumber: Optional[int] = None
+    ContactNote: Optional[str] = None
+    ContactDisplayName: Optional[str] = None
+    ContactEmail: Optional[str] = None
+    ContactFax: Optional[str] = None
+    ContactFirstName: Optional[str] = None
+    ContactLastName: ValueField
+    ContactMiddleName: Optional[str] = None
+    ContactPhone1: Optional[str] = None
+    ContactPhone1Type: Optional[ValueField] = None
+    ContactPhone2: Optional[str] = None
+    ContactPhone2Type: Optional[ValueField] = None
+    ContactTitle: Optional[ValueField] = None
+    AddressID: Optional[str] = None
+    AddressRowNumber: Optional[int] = None
+    AddressNote: Optional[str] = None
+    AddressLine1: Optional[ValueField] = None
+    AddressLine2: Optional[ValueField] = None
+    AddressCity: Optional[str] = None
+    AddressCountry: Optional[ValueField] = None
+    AddressPostalCode: Optional[str] = None
+    AddressState: Optional[str] = None
     CurrencyID: ValueField
     DateOfBirth: ValueField
     DepartmentID: ValueField
     EmployeeClassID: ValueField
     EmployeeID: ValueField
-    EmploymentHistory: List[EmploymentHistory]
+    EmploymentHistoryID: Optional[str] = None
+    EmploymentHistoryRowNumber: Optional[int] = None
+    EmploymentHistoryNote: Optional[str] = None
+    EmploymentHistoryActive: Optional[bool] = None
+    EmploymentHistoryEndDate: Optional[str] = None
+    EmploymentHistoryLineNbr: Optional[int] = None
+    EmploymentHistoryPositionID: Optional[ValueField] = None
+    EmploymentHistoryRehireEligible: Optional[bool] = None
+    EmploymentHistoryStartDate: Optional[str] = None
+    EmploymentHistoryStartReason: Optional[ValueField] = None
+    EmploymentHistoryTerminated: Optional[bool] = None
+    EmploymentHistoryTerminationReason: Optional[str] = None
     ExpenseAccount: ValueField
     ExpenseSubaccount: ValueField
     IdentityNumber: ValueField
     IdentityType: ValueField
-    LastModifiedDateTime: ValueField
+    LastModifiedDateTime: Optional[str] = None
     Name: ValueField
-    PaymentInstruction: List[PaymentInstruction]
-    ReportsToID: Optional[Dict]
+    PaymentInstructionID: Optional[str] = None
+    PaymentInstructionRowNumber: Optional[int] = None
+    PaymentInstructionNote: Optional[str] = None
+    PaymentInstructionBAccountID: Optional[int] = None
+    PaymentInstructionDescription: Optional[ValueField] = None
+    PaymentInstructionInstructionID: Optional[str] = None
+    PaymentInstructionLocationID: Optional[int] = None
+    PaymentInstructionMethod: ValueField
+    PaymentInstructionValue: Optional[str] = None
+    PaymentMethod: ValueField
+    ReportsToID: Optional[str] = None
     SalesAccount: ValueField
     SalesSubaccount: ValueField
     Status: ValueField
-    custom: Optional[Dict]
-    _links: Optional[Dict]
-    files: List[Dict]
+    Custom: Optional[Dict[str, Any]] = None
+    Links: Optional[Dict[str, Any]] = None
 
-# Endpoint to retrieve employee information
 @app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
 def get_employee(employee_id: str, authorization: Optional[str] = Header(None), db: Session = Depends(get_db)):
     try:
@@ -147,6 +129,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
 
         if response.status_code == 200:
             employee_data = response.json()
+
             # Flatten nested fields
             employee = Employee(
                 id=employee_data.get("id"),
@@ -179,7 +162,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 AddressPostalCode=employee_data.get("Contact", {}).get("Address", {}).get("PostalCode"),
                 AddressState=employee_data.get("Contact", {}).get("Address", {}).get("State"),
                 CurrencyID=employee_data.get("CurrencyID", {}).get("value"),
-                DateOfBirth=datetime.fromisoformat(employee_data.get("DateOfBirth", {}).get("value").replace("Z", "+00:00")),
+                DateOfBirth=employee_data.get("DateOfBirth", {}).get("value"),
                 DepartmentID=employee_data.get("DepartmentID", {}).get("value"),
                 EmployeeClassID=employee_data.get("EmployeeClassID", {}).get("value"),
                 EmployeeID=employee_data.get("EmployeeID", {}).get("value"),
@@ -191,7 +174,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 EmploymentHistoryLineNbr=employee_data.get("EmploymentHistory", [{}])[0].get("LineNbr", {}).get("value"),
                 EmploymentHistoryPositionID=employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
                 EmploymentHistoryRehireEligible=employee_data.get("EmploymentHistory", [{}])[0].get("RehireEligible", {}).get("value"),
-                EmploymentHistoryStartDate=employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
+                EmploymentHistoryStartDate=employee_data.get("EmploymentHistory", [{}])[0].get("StartDate"),
                 EmploymentHistoryStartReason=employee_data.get("EmploymentHistory", [{}])[0].get("StartReason", {}).get("value"),
                 EmploymentHistoryTerminated=employee_data.get("EmploymentHistory", [{}])[0].get("Terminated", {}).get("value"),
                 EmploymentHistoryTerminationReason=employee_data.get("EmploymentHistory", [{}])[0].get("TerminationReason"),
@@ -199,7 +182,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 ExpenseSubaccount=employee_data.get("ExpenseSubaccount", {}).get("value"),
                 IdentityNumber=employee_data.get("IdentityNumber", {}).get("value"),
                 IdentityType=employee_data.get("IdentityType", {}).get("value"),
-                LastModifiedDateTime=datetime.fromisoformat(employee_data.get("LastModifiedDateTime", {}).get("value").replace("Z", "+00:00")),
+                LastModifiedDateTime=employee_data.get("LastModifiedDateTime", {}).get("value"),
                 Name=employee_data.get("Name", {}).get("value"),
                 PaymentInstructionID=employee_data.get("PaymentInstruction", [{}])[0].get("id"),
                 PaymentInstructionRowNumber=employee_data.get("PaymentInstruction", [{}])[0].get("rowNumber"),
@@ -218,6 +201,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 Custom=employee_data.get("custom", {}),
                 Links=employee_data.get("_links", {})
             )
+            
             # Add to the database session
             db.add(employee)
             db.commit()
@@ -232,4 +216,4 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
 # Run the app
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    uvicorn.run(app, host="0.0.0.0", port=8000)  # Set to 0.0.0.0 to accept requests from any IP
