@@ -1,9 +1,8 @@
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
-from datetime import datetime
 
 class ValueField(BaseModel):
-    value: Optional[str]
+    value: Optional[str]  # Make value optional
 
 class Address(BaseModel):
     id: Optional[str]
