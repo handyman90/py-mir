@@ -66,7 +66,7 @@ class Employee(Base):
     Status = Column(String(30), nullable=True)  # Status
 
 # SQLAlchemy connection string to your SQL Server
-SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/employee?driver=ODBC+Driver+17+for+SQL+Server"
+SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
 
 # Create a SQLAlchemy engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
