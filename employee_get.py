@@ -53,6 +53,7 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
 
         if response.status_code == 200:
             employee_data = response.json()
+
             # Flatten nested fields and create EmployeeResponse
             employee_response = EmployeeResponse(
                 id=employee_data.get("id"),
