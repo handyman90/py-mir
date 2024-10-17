@@ -1,15 +1,12 @@
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
 from pydantic import BaseModel
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any
 from sqlalchemy.orm import Session
 from models import Employee, SessionLocal
 from datetime import datetime
 
 app = FastAPI()
-
-# Database connection URL
-SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
 
 # Token URL for authentication
 token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
@@ -41,7 +38,7 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic models for response structure (import your models)
+# Pydantic model for the API response
 from employee_get_models import EmployeeResponse
 
 # Endpoint to retrieve employee information
@@ -104,33 +101,38 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                 existing_employee.DepartmentID = employee_data.get("DepartmentID", {}).get("value")
                 existing_employee.EmployeeClassID = employee_data.get("EmployeeClassID", {}).get("value")
                 existing_employee.EmployeeID = employee_data.get("EmployeeID", {}).get("value")
-
-                # Updating EmploymentHistory (assuming a simple update strategy)
-                if employment_history:
-                    existing_employee.EmploymentHistoryID = employment_history[0].get("id")
-                    existing_employee.EmploymentHistoryRowNumber = employment_history[0].get("rowNumber")
-                    existing_employee.EmploymentHistoryNote = employment_history[0].get("note")
-                    existing_employee.EmploymentHistoryActive = employment_history[0].get("Active", {}).get("value")
-                    existing_employee.EmploymentHistoryEndDate = employment_history[0].get("EndDate")
-                    existing_employee.EmploymentHistoryLineNbr = employment_history[0].get("LineNbr", {}).get("value")
-                    existing_employee.EmploymentHistoryPositionID = employment_history[0].get("PositionID", {}).get("value")
-                    existing_employee.EmploymentHistoryRehireEligible = employment_history[0].get("RehireEligible", {}).get("value")
-                    existing_employee.EmploymentHistoryStartDate = employment_history[0].get("StartDate", {}).get("value")
-                    existing_employee.EmploymentHistoryStartReason = employment_history[0].get("StartReason", {}).get("value")
-                    existing_employee.EmploymentHistoryTerminated = employment_history[0].get("Terminated", {}).get("value")
-                    existing_employee.EmploymentHistoryTerminationReason = employment_history[0].get("TerminationReason", {}).get("value")
-
-                # Updating PaymentInstruction (assuming a simple update strategy)
-                if payment_instruction:
-                    existing_employee.PaymentInstructionID = payment_instruction[0].get("id")
-                    existing_employee.PaymentInstructionRowNumber = payment_instruction[0].get("rowNumber")
-                    existing_employee.PaymentInstructionNote = payment_instruction[0].get("note")
-                    existing_employee.PaymentInstructionBAccountID = payment_instruction[0].get("BAccountID", {}).get("value")
-                    existing_employee.PaymentInstructionDescription = payment_instruction[0].get("Description", {}).get("value")
-                    existing_employee.PaymentInstructionInstructionID = payment_instruction[0].get("InstructionID", {}).get("value")
-                    existing_employee.PaymentInstructionLocationID = payment_instruction[0].get("LocationID", {}).get("value")
-                    existing_employee.PaymentInstructionMethod = payment_instruction[0].get("PaymentMethod", {}).get("value")
-                    existing_employee.PaymentInstructionValue = payment_instruction[0].get("Value", {}).get("value")
+                existing_employee.EmploymentHistoryID = employment_history[0].get("id") if employment_history else None
+                existing_employee.EmploymentHistoryRowNumber = employment_history[0].get("rowNumber") if employment_history else None
+                existing_employee.EmploymentHistoryNote = employment_history[0].get("note") if employment_history else None
+                existing_employee.EmploymentHistoryActive = employment_history[0].get("Active", {}).get("value") if employment_history else None
+                existing_employee.EmploymentHistoryEndDate = employment_history[0].get("EndDate") if employment_history else None
+                existing_employee.EmploymentHistoryLineNbr = employment_history[0].get("LineNbr", {}).get("value") if employment_history else None
+                existing_employee.EmploymentHistoryPositionID = employment_history[0].get("PositionID", {}).get("value") if employment_history else None
+                existing_employee.EmploymentHistoryRehireEligible = employment_history[0].get("RehireEligible", {}).get("value") if employment_history else None
+                existing_employee.EmploymentHistoryStartDate = employment_history[0].get("StartDate", {}).get("value") if employment_history else None
+                existing_employee.EmploymentHistoryStartReason = employment_history[0].get("StartReason", {}).get("value") if employment_history else None
+                existing_employee.EmploymentHistoryTerminated = employment_history[0].get("Terminated", {}).get("value") if employment_history else None
+                existing_employee.EmploymentHistoryTerminationReason = employment_history[0].get("TerminationReason", {}).get("value") if employment_history else None
+                existing_employee.ExpenseAccount = employee_data.get("ExpenseAccount", {}).get("value")
+                existing_employee.ExpenseSubaccount = employee_data.get("ExpenseSubaccount", {}).get("value")
+                existing_employee.IdentityNumber = employee_data.get("IdentityNumber", {}).get("value")
+                existing_employee.IdentityType = employee_data.get("IdentityType", {}).get("value")
+                existing_employee.LastModifiedDateTime = datetime.fromisoformat(employee_data.get("LastModifiedDateTime", {}).get("value").replace("Z", "+00:00"))
+                existing_employee.Name = employee_data.get("Name", {}).get("value")
+                existing_employee.PaymentInstructionID = payment_instruction[0].get("id") if payment_instruction else None
+                existing_employee.PaymentInstructionRowNumber = payment_instruction[0].get("rowNumber") if payment_instruction else None
+                existing_employee.PaymentInstructionNote = payment_instruction[0].get("note") if payment_instruction else None
+                existing_employee.PaymentInstructionBAccountID = payment_instruction[0].get("BAccountID", {}).get("value") if payment_instruction else None
+                existing_employee.PaymentInstructionDescription = payment_instruction[0].get("Description", {}).get("value") if payment_instruction else None
+                existing_employee.PaymentInstructionInstructionID = payment_instruction[0].get("InstructionID", {}).get("value") if payment_instruction else None
+                existing_employee.PaymentInstructionLocationID = payment_instruction[0].get("LocationID", {}).get("value") if payment_instruction else None
+                existing_employee.PaymentInstructionMethod = payment_instruction[0].get("PaymentMethod", {}).get("value") if payment_instruction else None
+                existing_employee.PaymentInstructionValue = payment_instruction[0].get("Value", {}).get("value") if payment_instruction else None
+                existing_employee.PaymentMethod = employee_data.get("PaymentMethod", {}).get("value")
+                existing_employee.ReportsToID = employee_data.get("ReportsToID", {}).get("value")
+                existing_employee.SalesAccount = employee_data.get("SalesAccount", {}).get("value")
+                existing_employee.SalesSubaccount = employee_data.get("SalesSubaccount", {}).get("value")
+                existing_employee.Status = employee_data.get("Status", {}).get("value")
 
             else:
                 # Create a new employee record
@@ -200,14 +202,12 @@ def get_employee(employee_id: str, authorization: Optional[str] = Header(None), 
                     ReportsToID=employee_data.get("ReportsToID", {}).get("value"),
                     SalesAccount=employee_data.get("SalesAccount", {}).get("value"),
                     SalesSubaccount=employee_data.get("SalesSubaccount", {}).get("value"),
-                    Status=employee_data.get("Status", {}).get("value"),
-                    custom=None,
-                    links=employee_data.get("_links", {})
+                    Status=employee_data.get("Status", {}).get("value")
                 )
                 db.add(new_employee)
 
             db.commit()
-            return employee_data  # Return the original employee_data or mapped response
+            return EmployeeResponse.from_orm(existing_employee if existing_employee else new_employee)
 
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
