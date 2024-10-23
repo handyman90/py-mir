@@ -2,6 +2,7 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks
 from fastapi.responses import JSONResponse
 import requests
 import pandas as pd
+import os
 
 app = FastAPI()
 
@@ -55,6 +56,9 @@ def fetch_employee_data():
     # Prepare the data for Excel
     flattened_employees = []
 
+    # Prefixes to filter EmployeeID
+    prefixes = ("MIP", "FEL", "MIS", "PSH")
+
     for emp_id in employee_ids:
         emp_endpoint = f"https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee/{emp_id}"
         emp_response = requests.get(emp_endpoint, headers=headers)
@@ -62,8 +66,9 @@ def fetch_employee_data():
         if emp_response.status_code == 200:
             employee_data = emp_response.json()
 
-            # Check if the employee status is "Active"
-            if employee_data.get("Status", {}).get("value") == "Active":
+            # Check if the employee status is "Active" and EmployeeID starts with specified prefixes
+            employee_id_value = employee_data.get("EmployeeID", {}).get("value")
+            if employee_data.get("Status", {}).get("value") == "Active" and any(employee_id_value.startswith(prefix) for prefix in prefixes):
                 flattened_emp = {
                     "id": employee_data.get("id"),
                     "rowNumber": employee_data.get("rowNumber"),
@@ -75,7 +80,7 @@ def fetch_employee_data():
                     "DateOfBirth": employee_data.get("DateOfBirth", {}).get("value"),
                     "DepartmentID": employee_data.get("DepartmentID", {}).get("value"),
                     "EmployeeClassID": employee_data.get("EmployeeClassID", {}).get("value"),
-                    "EmployeeID": employee_data.get("EmployeeID", {}).get("value"),
+                    "EmployeeID": employee_id_value,
                     "ExpenseAccount": employee_data.get("ExpenseAccount", {}).get("value"),
                     "ExpenseSubaccount": employee_data.get("ExpenseSubaccount", {}).get("value"),
                     "IdentityNumber": employee_data.get("IdentityNumber", {}).get("value"),
@@ -119,3 +124,27 @@ async def fetch_employees(background_tasks: BackgroundTasks):
 @app.get("/progress")
 async def get_progress():
     return JSONResponse(content=progress)
+
+# HTML page for progress
+@app.get("/progress_page")
+async def get_progress_page():
+    return """
+    <html>
+    <head>
+        <title>Employee Fetch Progress</title>
+        <script>
+            setInterval(() => {
+                fetch('/progress')
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('progress').innerText = 'Current: ' + data.current + ' / Total: ' + data.total;
+                    });
+            }, 5000);
+        </script>
+    </head>
+    <body>
+        <h1>Employee Fetch Progress</h1>
+        <div id="progress">Current: 0 / Total: 0</div>
+    </body>
+    </html>
+    """
