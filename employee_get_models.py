@@ -1,8 +1,8 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Dict
 
 class ValueField(BaseModel):
-    value: Optional[Union[str, Dict]]
+    value: Optional[str]
 
 class Address(BaseModel):
     id: Optional[str]
@@ -21,13 +21,13 @@ class Contact(BaseModel):
     note: Optional[str]
     DisplayName: ValueField
     Email: ValueField
-    Fax: Optional[Union[Dict, ValueField]]  # Updated
-    FirstName: Optional[Union[Dict, ValueField]]  # Updated
+    Fax: Optional[Dict]
+    FirstName: Optional[Dict]
     LastName: ValueField
-    MiddleName: Optional[Union[Dict, ValueField]]  # Updated
-    Phone1: Optional[Union[Dict, ValueField]]  # Updated
+    MiddleName: Optional[Dict]
+    Phone1: Optional[Dict]
     Phone1Type: ValueField
-    Phone2: Optional[Union[Dict, ValueField]]  # Updated
+    Phone2: Optional[Dict]
     Phone2Type: ValueField
     Title: ValueField
     Address: Address
@@ -64,17 +64,20 @@ class EmployeeResponse(BaseModel):
     BranchID: ValueField
     Calendar: ValueField
     CashAccount: ValueField
+    Contact: Contact
     CurrencyID: ValueField
     DateOfBirth: ValueField
     DepartmentID: ValueField
     EmployeeClassID: ValueField
     EmployeeID: ValueField
+    EmploymentHistory: List[EmploymentHistory]
     ExpenseAccount: ValueField
     ExpenseSubaccount: ValueField
     IdentityNumber: ValueField
     IdentityType: ValueField
     LastModifiedDateTime: Optional[str]
     Name: ValueField
+    PaymentInstruction: List[PaymentInstruction]
     PaymentMethod: ValueField
     ReportsToID: Optional[Dict]
     SalesAccount: ValueField
@@ -82,6 +85,3 @@ class EmployeeResponse(BaseModel):
     Status: ValueField
     Custom: Optional[Dict]
     Links: Optional[Dict]
-    Contact: Contact
-    EmploymentHistory: List[EmploymentHistory]
-    PaymentInstruction: List[PaymentInstruction]
