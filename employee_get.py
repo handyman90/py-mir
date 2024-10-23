@@ -59,9 +59,13 @@ def fetch_employee_data():
         return
 
     employee_ids = [emp['id'] for emp in response.json()]
+    logging.info(f"Fetched {len(employee_ids)} employee IDs.")
 
     # Filter employee IDs based on your criteria
     filtered_employee_ids = [emp_id for emp_id in employee_ids if emp_id.startswith(('MIP', 'FEL', 'MIS', 'PSH'))]
+
+    # Log filtered results
+    logging.info(f"Filtered {len(filtered_employee_ids)} employee IDs matching the criteria: {filtered_employee_ids}")
 
     # Update progress total
     progress["total"] = len(filtered_employee_ids)
