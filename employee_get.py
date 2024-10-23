@@ -56,7 +56,7 @@ async def fetch_employees(token: str):
             break
 
         for employee_data in employees:
-            if employee_data.get("Status", {}).get("value") == "Active":
+            if isinstance(employee_data, dict) and employee_data.get("Status", {}).get("value") == "Active":
                 yield flatten_employee_data(employee_data)
         
         page += 1  # Move to the next page
