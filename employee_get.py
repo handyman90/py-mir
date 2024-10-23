@@ -1,18 +1,16 @@
-Here is the completed code with the `#... (Other fields with the same handling)` sections filled in:
-
-**employee_get.py (Updated)**
-```python
 from fastapi import FastAPI, HTTPException, Header, Depends
 import requests
-from sqlalchemy.orm import Session
-from models import SessionLocal, Employee, Contact
-from employee_get_models import EmployeeResponse, ValueField, Contact as ContactModel, Address, EmploymentHistory, PaymentInstruction
+from employee_get_models import EmployeeResponse, ValueField, Contact, Address, EmploymentHistory, PaymentInstruction
+from pandas import DataFrame
 from datetime import datetime
+import pandas as pd
 
 app = FastAPI()
 
+# Token URL and payload for authentication
 token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
 
+# Function to authenticate and get a session token
 def get_auth_token() -> dict:
     payload = {
         "grant_type": "password",
@@ -31,21 +29,51 @@ def get_auth_token() -> dict:
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Helper function to flatten the nested JSON
+def flatten_employee_data(employee_data: dict) -> dict:
+    flattened_data = {
+        "id": employee_data.get("id"),
+        "rowNumber": employee_data.get("rowNumber"),
+        "note": employee_data.get("note"),
+        "BranchID": employee_data.get("BranchID", {}).get("value"),
+        "Calendar": employee_data.get("Calendar", {}).get("value"),
+        "CashAccount": employee_data.get("CashAccount", {}).get("value"),
+        "CurrencyID": employee_data.get("CurrencyID", {}).get("value"),
+        "DateOfBirth": employee_data.get("DateOfBirth", {}).get("value"),
+        "DepartmentID": employee_data.get("DepartmentID", {}).get("value"),
+        "EmployeeClassID": employee_data.get("EmployeeClassID", {}).get("value"),
+        "EmployeeID": employee_data.get("EmployeeID", {}).get("value"),
+        "ExpenseAccount": employee_data.get("ExpenseAccount", {}).get("value"),
+        "ExpenseSubaccount": employee_data.get("ExpenseSubaccount", {}).get("value"),
+        "IdentityNumber": employee_data.get("IdentityNumber", {}).get("value"),
+        "IdentityType": employee_data.get("IdentityType", {}).get("value"),
+        "LastModifiedDateTime": employee_data.get("LastModifiedDateTime"),
+        "Name": employee_data.get("Name", {}).get("value"),
+        "PaymentMethod": employee_data.get("PaymentMethod", {}).get("value"),
+        "Status": employee_data.get("Status", {}).get("value"),
+        # Flatten Contact
+        "ContactID": employee_data.get("Contact", {}).get("id"),
+        "ContactDisplayName": employee_data.get("Contact", {}).get("DisplayName", {}).get("value"),
+        "ContactEmail": employee_data.get("Contact", {}).get("Email", {}).get("value"),
+        # Flatten Address
+        "AddressLine1": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"),
+        "AddressLine2": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"),
+        "AddressCity": employee_data.get("Contact", {}).get("Address", {}).get("City", {}),
+        "AddressCountry": employee_data.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"),
+        "AddressPostalCode": employee_data.get("Contact", {}).get("Address", {}).get("PostalCode", {}),
+        "AddressState": employee_data.get("Contact", {}).get("Address", {}).get("State", {}),
+        # Flatten EmploymentHistory
+        "EmploymentHistoryPositionID": employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
+        "EmploymentHistoryStartDate": employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
+        "EmploymentHistoryEndDate": employee_data.get("EmploymentHistory", [{}])[0].get("EndDate", {}),
+        # Flatten PaymentInstruction
+        "PaymentInstructionValue": employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
+    }
+    return flattened_data
 
-def handle_value_field(data):
-    if isinstance(data, dict) and len(data) == 0:
-        print("Warning: Empty dictionary encountered for ValueField. Using None.")
-        return None
-    return data
-
-@app.get("/organization/employee/{employee_id}", response_model=EmployeeResponse)
-def get_employee(employee_id: str, authorization: str = Header(None), db: Session = Depends(get_db)):
+# Endpoint to retrieve and save employee information as Excel
+@app.get("/organization/employee/{employee_id}")
+def get_employee(employee_id: str, authorization: str = Header(None)):
     try:
         if authorization is None:
             token_response = get_auth_token()
@@ -59,137 +87,24 @@ def get_employee(employee_id: str, authorization: str = Header(None), db: Sessio
         if response.status_code == 200:
             employee_data = response.json()
 
-            employee_response = EmployeeResponse(
-                id=employee_data.get("id"),
-                rowNumber=employee_data.get("rowNumber"),
-                note=employee_data.get("note"),
-                BranchID=ValueField(value=handle_value_field(employee_data.get("BranchID", {}).get("value"))),
-                Calendar=ValueField(value=handle_value_field(employee_data.get("Calendar", {}).get("value"))),
-                CashAccount=ValueField(value=handle_value_field(employee_data.get("CashAccount", {}).get("value"))),
-                CurrencyID=ValueField(value=handle_value_field(employee_data.get("CurrencyID", {}).get("value"))),
-                DateOfBirth=ValueField(value=handle_value_field(employee_data.get("DateOfBirth", {}).get("value"))),
-                DepartmentID=ValueField(value=handle_value_field(employee_data.get("DepartmentID", {}).get("value"))),
-                EmployeeClassID=ValueField(value=handle_value_field(employee_data.get("EmployeeClassID", {}).get("value"))),
-                EmployeeID=ValueField(value=handle_value_field(employee_data.get("EmployeeID", {}).get("value"))),
-                ExpenseAccount=ValueField(value=handle_value_field(employee_data.get("ExpenseAccount", {}).get("value"))),
-                ExpenseSubaccount=ValueField(value=handle_value_field(employee_data.get("ExpenseSubaccount", {}).get("value"))),
-                IdentityNumber=ValueField(value=handle_value_field(employee_data.get("IdentityNumber", {}).get("value"))),
-                IdentityType=ValueField(value=handle_value_field(employee_data.get("IdentityType", {}).get("value"))),
-                LastModifiedDateTime=employee_data.get("LastModifiedDateTime"),
-                Name=ValueField(value=handle_value_field(employee_data.get("Name", {}).get("value"))),
-                PaymentMethod=ValueField(value=handle_value_field(employee_data.get("PaymentMethod", {}).get("value"))),
-                ReportsToID=employee_data.get("ReportsToID"),
-                SalesAccount=ValueField(value=handle_value_field(employee_data.get("SalesAccount", {}).get("value"))),
-                SalesSubaccount=ValueField(value=handle_value_field(employee_data.get("SalesSubaccount", {}).get("value"))),
-                Status=ValueField(value=handle_value_field(employee_data.get("Status", {}).get("value"))),
-                Custom=employee_data.get("Custom"),
-                Links=employee_data.get("Links"),
-                Contact=ContactModel(
-                    id=employee_data.get("Contact", {}).get("id"),
-                    rowNumber=employee_data.get("Contact", {}).get("rowNumber"),
-                    note=employee_data.get("Contact", {}).get("note"),
-                    DisplayName=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("DisplayName", {}).get("value"))),
-                    Email=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("Email", {}).get("value"))),
-                    Fax=employee_data.get("Contact", {}).get("Fax"),
-                    FirstName=employee_data.get("Contact", {}).get("FirstName"),
-                    LastName=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("LastName", {}).get("value"))),
-                    MiddleName=employee_data.get("Contact", {}).get("MiddleName"),
-                    Phone1=employee_data.get("Contact", {}).get("Phone1"),
-                    Phone1Type=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("Phone1Type", {}).get("value"))),
-                    Phone2=employee_data.get("Contact", {}).get("Phone2"),
-                    Phone2Type=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("Phone2Type", {}).get("value"))),
-                    Title=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("Title", {}).get("value"))),
-                    Address=Address(
-                        id=employee_data.get("Contact", {}).get("Address", {}).get("id"),
-                        rowNumber=employee_data.get("Contact", {}).get("Address", {}).get("rowNumber"),
-                        note=employee_data.get("Contact", {}).get("Address", {}).get("note"),
-                        AddressLine1=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"))),
-                        AddressLine2=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"))),
-                        City=employee_data.get("Contact", {}).get("Address", {}).get("City"),
-                        Country=ValueField(value=handle_value_field(employee_data.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"))),
-                        PostalCode=employee_data.get("Contact", {}).get("Address", {}).get("PostalCode"),
-                        State=employee_data.get("Contact", {}).get("Address", {}).get("State")
-                    )
-                ),
-                EmploymentHistory=[
-                    EmploymentHistory(
-                        id=history.get("id"),
-                        rowNumber=history.get("rowNumber"),
-                        note=history.get("note"),
-                        Active=ValueField(value=handle_value_field(history.get("Active", {}).get("value"))),
-                        EndDate=history.get("EndDate"),
-                        LineNbr=ValueField(value=handle_value_field(history.get("LineNbr", {}).get("value"))),
-                        PositionID=ValueField(value=handle_value_field(history.get("PositionID", {}).get("value"))),
-                        RehireEligible=ValueField(value=handle_value_field(history.get("RehireEligible", {}).get("value"))),
-                        StartDate=ValueField(value=handle_value_field(history.get("StartDate", {}).get("value"))),
-                        StartReason=ValueField(value=handle_value_field(history.get("StartReason", {}).get("value"))),
-                        Terminated=ValueField(value=handle_value_field(history.get("Terminated", {}).get("value"))),
-                        TerminationReason=history.get("TerminationReason")
-                    ) for history in employee_data.get("EmploymentHistory", [])
-                ],
-                PaymentInstruction=[
-                    PaymentInstruction(
-                        id=instruction.get("id"),
-                        rowNumber=instruction.get("rowNumber"),
-                        note=instruction.get("note"),
-                        BAccountID=ValueField(value=handle_value_field(instruction.get("BAccountID", {}).get("value"))),
-                        Description=ValueField(value=handle_value_field(instruction.get("Description", {}).get("value"))),
-                        InstructionID=ValueField(value=handle_value_field(instruction.get("InstructionID", {}).get("value"))),
-                        LocationID=ValueField(value=handle_value_field(instruction.get("LocationID", {}).get("value"))),
-                        PaymentMethod=ValueField(value=handle_value_field(instruction.get("PaymentMethod", {}).get("value"))),
-                        Value=ValueField(value=handle_value_field(instruction.get("Value", {}).get("value")))
-                    ) for instruction in employee_data.get("PaymentInstruction", [])
-                ]
-            )
+            # Flatten the employee data
+            flattened_employee = flatten_employee_data(employee_data)
 
-            employee = Employee(
-                id=employee_response.id,
-                rowNumber=employee_response.rowNumber,
-                note=employee_response.note,
-                BranchID=employee_response.BranchID.value,
-                Calendar=employee_response.Calendar.value,
-                CashAccount=employee_response.CashAccount.value,
-                ContactID=employee_response.Contact.id,
-                CurrencyID=employee_response.CurrencyID.value,
-                DateOfBirth=employee_response.DateOfBirth.value,
-                DepartmentID=employee_response.DepartmentID.value,
-                EmployeeClassID=employee_response.EmployeeClassID.value,
-                EmployeeID=employee_response.EmployeeID.value,
-                ExpenseAccount=employee_response.ExpenseAccount.value,
-                ExpenseSubaccount=employee_response.ExpenseSubaccount.value,
-                IdentityNumber=employee_response.IdentityNumber.value,
-                IdentityType=employee_response.IdentityType.value,
-                LastModifiedDateTime=employee_response.LastModifiedDateTime,
-                Name=employee_response.Name.value,
-                PaymentMethod=employee_response.PaymentMethod.value,
-                ReportsToID=employee_response.ReportsToID,
-                SalesAccount=employee_response.SalesAccount.value,
-                SalesSubaccount=employee_response.SalesSubaccount.value,
-                Status=employee_response.Status.value
-            )
-            db.add(employee)
-            db.commit()
+            # Create a DataFrame and export to Excel
+            df = DataFrame([flattened_employee])
+            file_name = f"employee_{employee_id}.xlsx"
+            df.to_excel(file_name, index=False)
 
-            if db.query(Contact).filter_by(id=employee_response.Contact.id).first() is None:
-                contact = Contact(
-                    id=employee_response.Contact.id,
-                    rowNumber=employee_response.Contact.rowNumber,
-                    note=employee_response.Contact.note
-                )
-                db.add(contact)
-                db.commit()
-
-            return employee_response
+            return {"detail": f"Employee data saved to {file_name}"}
 
         else:
             raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
 
     except Exception as e:
-        db.rollback()
         print(f"Exception occurred: {str(e)}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# Run the app
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-```
