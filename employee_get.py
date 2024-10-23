@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.responses import JSONResponse
 import requests
 import pandas as pd
 import os
@@ -63,6 +63,7 @@ def fetch_employee_data():
     # Filter employee IDs based on your criteria
     filtered_employee_ids = [emp_id for emp_id in employee_ids if emp_id.startswith(('MIP', 'FEL', 'MIS', 'PSH'))]
 
+    # Update progress total
     progress["total"] = len(filtered_employee_ids)
 
     # Prepare the data for Excel
@@ -108,14 +109,14 @@ def fetch_employee_data():
                     # Flatten Address
                     "AddressLine1": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"),
                     "AddressLine2": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"),
-                    "AddressCity": employee_data.get("Contact", {}).get("Address", {}).get("City", {}),
+                    "AddressCity": employee_data.get("Contact", {}).get("Address", {}).get("City", {}).get("value"),
                     "AddressCountry": employee_data.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"),
-                    "AddressPostalCode": employee_data.get("Contact", {}).get("Address", {}).get("PostalCode", {}),
-                    "AddressState": employee_data.get("Contact", {}).get("Address", {}).get("State", {}),
+                    "AddressPostalCode": employee_data.get("Contact", {}).get("Address", {}).get("PostalCode", {}).get("value"),
+                    "AddressState": employee_data.get("Contact", {}).get("Address", {}).get("State", {}).get("value"),
                     # Flatten EmploymentHistory
                     "EmploymentHistoryPositionID": employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
                     "EmploymentHistoryStartDate": employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
-                    "EmploymentHistoryEndDate": employee_data.get("EmploymentHistory", [{}])[0].get("EndDate", {}),
+                    "EmploymentHistoryEndDate": employee_data.get("EmploymentHistory", [{}])[0].get("EndDate", {}).get("value"),
                     # Flatten PaymentInstruction
                     "PaymentInstructionValue": employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
                 }
@@ -124,31 +125,18 @@ def fetch_employee_data():
         else:
             logging.error(f"Failed to fetch data for employee ID {emp_id}: {emp_response.status_code} - {emp_response.text}")
 
-    # Write to Excel
-    df = pd.DataFrame(flattened_employees)
-    df.to_excel(excel_file_path, index=False)
+    # Write to Excel only if data is available
+    if flattened_employees:
+        df = pd.DataFrame(flattened_employees)
+        df.to_excel(excel_file_path, index=False)
+    else:
+        logging.info("No active employees found for the specified filters.")
 
 @app.get("/fetch_employees")
 async def fetch_employees(background_tasks: BackgroundTasks):
     background_tasks.add_task(fetch_employee_data)
     return JSONResponse(content={"message": "Fetching employee data in the background."})
 
-@app.get("/progress", response_class=HTMLResponse)
+@app.get("/progress")
 async def get_progress():
-    # Create a simple HTML page to show progress
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <title>Employee Data Fetch Progress</title>
-        <meta http-equiv="refresh" content="5"> <!-- Refresh every 5 seconds -->
-    </head>
-    <body>
-        <h1>Employee Data Fetch Progress</h1>
-        <p>Current: {progress["current"]}</p>
-        <p>Total: {progress["total"]}</p>
-        <p>Progress: {progress["current"] / progress["total"] * 100 if progress["total"] > 0 else 0:.2f}%</p>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
+    return JSONResponse(content=progress)
