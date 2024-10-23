@@ -1,14 +1,10 @@
-import requests
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-import pandas as pd
 from fastapi.responses import JSONResponse
-from typing import Dict
-from time import sleep
+import requests
+import pandas as pd
+import os
 
 app = FastAPI()
-
-# Dictionary to store progress status
-progress: Dict[str, int] = {"percent": 0}
 
 # Token URL and payload for authentication
 token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
@@ -32,101 +28,92 @@ def get_auth_token() -> dict:
     else:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Function to flatten employee data
-def flatten_employee_data(employee_data):
-    return {
-        "id": employee_data.get("id"),
-        "rowNumber": employee_data.get("rowNumber"),
-        "note": employee_data.get("note"),
-        "BranchID": employee_data.get("BranchID", {}).get("value"),
-        "Calendar": employee_data.get("Calendar", {}).get("value"),
-        "CashAccount": employee_data.get("CashAccount", {}).get("value"),
-        "CurrencyID": employee_data.get("CurrencyID", {}).get("value"),
-        "DateOfBirth": employee_data.get("DateOfBirth", {}).get("value"),
-        "DepartmentID": employee_data.get("DepartmentID", {}).get("value"),
-        "EmployeeClassID": employee_data.get("EmployeeClassID", {}).get("value"),
-        "EmployeeID": employee_data.get("EmployeeID", {}).get("value"),
-        "ExpenseAccount": employee_data.get("ExpenseAccount", {}).get("value"),
-        "ExpenseSubaccount": employee_data.get("ExpenseSubaccount", {}).get("value"),
-        "IdentityNumber": employee_data.get("IdentityNumber", {}).get("value"),
-        "IdentityType": employee_data.get("IdentityType", {}).get("value"),
-        "LastModifiedDateTime": employee_data.get("LastModifiedDateTime"),
-        "Name": employee_data.get("Name", {}).get("value"),
-        "PaymentMethod": employee_data.get("PaymentMethod", {}).get("value"),
-        "Status": employee_data.get("Status", {}).get("value"),
-        # Flatten Contact
-        "ContactID": employee_data.get("Contact", {}).get("id"),
-        "ContactDisplayName": employee_data.get("Contact", {}).get("DisplayName", {}).get("value"),
-        "ContactEmail": employee_data.get("Contact", {}).get("Email", {}).get("value"),
-        # Flatten Address
-        "AddressLine1": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"),
-        "AddressLine2": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"),
-        "AddressCity": employee_data.get("Contact", {}).get("Address", {}).get("City", {}),
-        "AddressCountry": employee_data.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"),
-        "AddressPostalCode": employee_data.get("Contact", {}).get("Address", {}).get("PostalCode", {}),
-        "AddressState": employee_data.get("Contact", {}).get("Address", {}).get("State", {}),
-        # Flatten EmploymentHistory
-        "EmploymentHistoryPositionID": employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
-        "EmploymentHistoryStartDate": employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
-        "EmploymentHistoryEndDate": employee_data.get("EmploymentHistory", [{}])[0].get("EndDate", {}),
-        # Flatten PaymentInstruction
-        "PaymentInstructionValue": employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
-    }
+# Initialize progress tracking
+progress = {"current": 0, "total": 0}
 
-# Function to save data to an Excel file
-def save_to_excel(employee_data):
-    df = pd.DataFrame(employee_data)
-    df.to_excel("employee_data.xlsx", index=False)
-
-def background_fetch_employees():
+def fetch_employee_data():
     global progress
-    token = get_auth_token().get("access_token")
-
-    # Initialize an empty list to store all employee data
-    all_employees = []
+    progress["current"] = 0
     
-    page = 1
-    while True:
-        headers = {
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json"
-        }
-        
-        # Fetch employee data from the API
-        response = requests.get(f"https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/{page}/Employee", headers=headers)
-        
-        if response.status_code != 200:
-            raise HTTPException(status_code=response.status_code, detail="Failed to fetch employee data")
+    # Get the authentication token
+    token_data = get_auth_token()
+    access_token = token_data["access_token"]
 
-        # Get employee data from the response
-        employee_data_list = response.json()
+    # Endpoint to retrieve employee IDs
+    ids_endpoint = "https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee"
+    
+    # Fetching all employee IDs (assuming you have the endpoint)
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.get(ids_endpoint, headers=headers)
+    
+    if response.status_code != 200:
+        raise HTTPException(status_code=response.status_code, detail="Failed to fetch employee IDs")
+
+    employee_ids = [emp['id'] for emp in response.json()]
+
+    progress["total"] = len(employee_ids)
+
+    # Prepare the data for Excel
+    flattened_employees = []
+
+    for emp_id in employee_ids:
+        emp_endpoint = f"https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee/{emp_id}"
+        emp_response = requests.get(emp_endpoint, headers=headers)
         
-        # If there are no more employees, break the loop
-        if not employee_data_list:
-            break
-        
-        # Flatten and append each employee's data to the all_employees list
-        for employee_data in employee_data_list:
-            flattened_emp = flatten_employee_data(employee_data)
-            all_employees.append(flattened_emp)
+        if emp_response.status_code == 200:
+            employee_data = emp_response.json()
+            flattened_emp = {
+                "id": employee_data.get("id"),
+                "rowNumber": employee_data.get("rowNumber"),
+                "note": employee_data.get("note"),
+                "BranchID": employee_data.get("BranchID", {}).get("value"),
+                "Calendar": employee_data.get("Calendar", {}).get("value"),
+                "CashAccount": employee_data.get("CashAccount", {}).get("value"),
+                "CurrencyID": employee_data.get("CurrencyID", {}).get("value"),
+                "DateOfBirth": employee_data.get("DateOfBirth", {}).get("value"),
+                "DepartmentID": employee_data.get("DepartmentID", {}).get("value"),
+                "EmployeeClassID": employee_data.get("EmployeeClassID", {}).get("value"),
+                "EmployeeID": employee_data.get("EmployeeID", {}).get("value"),
+                "ExpenseAccount": employee_data.get("ExpenseAccount", {}).get("value"),
+                "ExpenseSubaccount": employee_data.get("ExpenseSubaccount", {}).get("value"),
+                "IdentityNumber": employee_data.get("IdentityNumber", {}).get("value"),
+                "IdentityType": employee_data.get("IdentityType", {}).get("value"),
+                "LastModifiedDateTime": employee_data.get("LastModifiedDateTime"),
+                "Name": employee_data.get("Name", {}).get("value"),
+                "PaymentMethod": employee_data.get("PaymentMethod", {}).get("value"),
+                "Status": employee_data.get("Status", {}).get("value"),
+                # Flatten Contact
+                "ContactID": employee_data.get("Contact", {}).get("id"),
+                "ContactDisplayName": employee_data.get("Contact", {}).get("DisplayName", {}).get("value"),
+                "ContactEmail": employee_data.get("Contact", {}).get("Email", {}).get("value"),
+                # Flatten Address
+                "AddressLine1": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"),
+                "AddressLine2": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"),
+                "AddressCity": employee_data.get("Contact", {}).get("Address", {}).get("City", {}),
+                "AddressCountry": employee_data.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"),
+                "AddressPostalCode": employee_data.get("Contact", {}).get("Address", {}).get("PostalCode", {}),
+                "AddressState": employee_data.get("Contact", {}).get("Address", {}).get("State", {}),
+                # Flatten EmploymentHistory
+                "EmploymentHistoryPositionID": employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
+                "EmploymentHistoryStartDate": employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
+                "EmploymentHistoryEndDate": employee_data.get("EmploymentHistory", [{}])[0].get("EndDate", {}),
+                # Flatten PaymentInstruction
+                "PaymentInstructionValue": employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
+            }
+            flattened_employees.append(flattened_emp)
+            progress["current"] += 1
+        else:
+            print(f"Failed to fetch data for employee ID {emp_id}")
 
-        # Update progress
-        progress["percent"] = min(100, page * 10)  # Example logic to update progress based on pages
-        page += 1  # Move to the next page
-        sleep(0.5)  # Simulate some processing time
-
-    # Write all employee data to Excel
-    save_to_excel(all_employees)
-
-    # Final progress update
-    progress["percent"] = 100
+    # Write to Excel
+    df = pd.DataFrame(flattened_employees)
+    df.to_excel("employees.xlsx", index=False)
 
 @app.get("/fetch_employees")
 async def fetch_employees(background_tasks: BackgroundTasks):
-    progress["percent"] = 0  # Reset progress
-    background_tasks.add_task(background_fetch_employees)
-    return JSONResponse(content={"message": "Employee data fetch initiated. Check progress."})
+    background_tasks.add_task(fetch_employee_data)
+    return JSONResponse(content={"message": "Fetching employee data in the background."})
 
 @app.get("/progress")
 async def get_progress():
-    return progress
+    return JSONResponse(content=progress)
