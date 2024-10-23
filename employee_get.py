@@ -4,6 +4,7 @@ from employee_get_models import EmployeeResponse, ValueField, Contact, Address, 
 from pandas import DataFrame
 from datetime import datetime
 import pandas as pd
+import os
 
 app = FastAPI()
 
@@ -71,34 +72,49 @@ def flatten_employee_data(employee_data: dict) -> dict:
     }
     return flattened_data
 
-# Endpoint to retrieve and save employee information as Excel
-@app.get("/organization/employee/{employee_id}")
-def get_employee(employee_id: str, authorization: str = Header(None)):
+# Helper function to save data to Excel
+def save_to_excel(flattened_data_list: list, file_name: str = "employees_data.xlsx"):
+    df = pd.DataFrame(flattened_data_list)
+
+    if os.path.exists(file_name):
+        # If the file exists, load the existing data and append new data
+        existing_df = pd.read_excel(file_name)
+        combined_df = pd.concat([existing_df, df], ignore_index=True)
+        combined_df.drop_duplicates(subset=["EmployeeID"], keep="last", inplace=True)
+    else:
+        # If the file doesn't exist, create it
+        combined_df = df
+
+    # Write updated data to Excel
+    combined_df.to_excel(file_name, index=False)
+
+# Endpoint to retrieve and save multiple employee records as Excel
+@app.post("/organization/employees/")
+def get_employees(employee_ids: list, authorization: str = Header(None)):
     try:
         if authorization is None:
             token_response = get_auth_token()
             authorization = token_response.get("access_token")
 
-        url = f"https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee/{employee_id}?$expand=Contact/Address,EmploymentHistory,PaymentInstruction"
-        headers = {"Authorization": f"Bearer {authorization}"}
+        flattened_data_list = []
+        for employee_id in employee_ids:
+            url = f"https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee/{employee_id}?$expand=Contact/Address,EmploymentHistory,PaymentInstruction"
+            headers = {"Authorization": f"Bearer {authorization}"}
 
-        response = requests.get(url, headers=headers)
+            response = requests.get(url, headers=headers)
 
-        if response.status_code == 200:
-            employee_data = response.json()
+            if response.status_code == 200:
+                employee_data = response.json()
+                # Flatten the employee data and add to list
+                flattened_data = flatten_employee_data(employee_data)
+                flattened_data_list.append(flattened_data)
+            else:
+                raise HTTPException(status_code=response.status_code, detail=f"Error fetching data for Employee ID {employee_id}")
 
-            # Flatten the employee data
-            flattened_employee = flatten_employee_data(employee_data)
+        # Save all employee data to the Excel file
+        save_to_excel(flattened_data_list)
 
-            # Create a DataFrame and export to Excel
-            df = DataFrame([flattened_employee])
-            file_name = f"employee_{employee_id}.xlsx"
-            df.to_excel(file_name, index=False)
-
-            return {"detail": f"Employee data saved to {file_name}"}
-
-        else:
-            raise HTTPException(status_code=response.status_code, detail="Error fetching employee data")
+        return {"detail": "Employee data saved and updated in Excel"}
 
     except Exception as e:
         print(f"Exception occurred: {str(e)}")
