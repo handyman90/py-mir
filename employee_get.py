@@ -159,10 +159,11 @@ async def fetch_employees(background_tasks: BackgroundTasks):
 
 @app.get("/progress")
 async def get_progress():
-    # Check if progress has stalled for more than 10 seconds
-    if time.time() - progress["last_update_time"] > 10:
+    # Check if progress has stalled for more than 30 seconds
+    if time.time() - progress["last_update_time"] > 30:
         progress["current"] = progress["total"]  # Mark progress as 100% if stalled
     return JSONResponse(content=progress)
+
 @app.get("/progress_page", response_class=HTMLResponse)
 async def progress_page():
     html_content = """
@@ -191,65 +192,46 @@ async def progress_page():
             }
             .progress-bar {
                 height: 100%;
-                background-color: #4caf50;
-                width: 0;
-                transition: width 0.5s ease-in-out;
+                background-color: #76c7c0;
+                transition: width 0.5s;
+            }
+            #status {
+                margin-top: 10px;
             }
         </style>
-        <script>
-            let lastProgress = 0;
-            let timeoutTriggered = false;
-
-            async function fetchProgress() {
-                const response = await fetch('/progress');
-                const progress = await response.json();
-                const progressBar = document.getElementById('progress-bar');
-                const progressText = document.getElementById('progress-text');
-                const itemsFoundText = document.getElementById('items-found');
-
-                if (progress.total > 0) {
-                    const percent = Math.floor((progress.current / progress.total) * 100);
-                    progressBar.style.width = percent + '%';
-                    progressText.innerText = percent + '% completed';
-                    itemsFoundText.innerText = 'Items Found: ' + progress.total;
-
-                    if (percent > lastProgress) {
-                        lastProgress = percent;
-                        timeoutTriggered = false;  // Reset if new progress is made
-                        setTimeout(checkForTimeout, 30000); // Set 30-second timeout check
-                    }
-                } else {
-                    progressBar.style.width = '100%';
-                    progressText.innerText = 'No employees to process.';
-                    itemsFoundText.innerText = 'Items Found: 0';
-                }
-            }
-
-            function checkForTimeout() {
-                if (lastProgress < 100 && !timeoutTriggered) {
-                    // If no progress for 10 seconds, set progress to 90%
-                    timeoutTriggered = true;
-                    document.getElementById('progress-bar').style.width = '90%';
-                    document.getElementById('progress-text').innerText = '90% - Creating Files...';
-
-                    // Wait another 30 seconds to complete the process
-                    setTimeout(() => {
-                        document.getElementById('progress-bar').style.width = '100%';
-                        document.getElementById('progress-text').innerText = '100% - Complete';
-                    }, 30000);  // 30-second delay before marking complete
-                }
-            }
-
-            setInterval(fetchProgress, 1000);
-        </script>
     </head>
     <body>
         <h1>Employee Data Fetch Progress</h1>
-        <div class="progress">
-            <div id="progress-bar" class="progress-bar"></div>
+        <div class="progress" id="progress">
+            <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
         </div>
-        <p id="progress-text">0% completed</p>
-        <p id="items-found">Items Found: 0</p>
+        <div id="status">Fetching data...</div>
+        <script>
+            async function updateProgress() {
+                const response = await fetch("/progress");
+                const data = await response.json();
+                const progressBar = document.getElementById("progress-bar");
+                const status = document.getElementById("status");
+
+                if (data.total > 0) {
+                    const percentage = (data.current / data.total) * 100;
+                    progressBar.style.width = percentage + '%';
+                    status.innerText = `Processed ${data.current} of ${data.total} records.`;
+                } else {
+                    progressBar.style.width = '100%';
+                    status.innerText = "No records to process.";
+                }
+
+                // Stop updating if finished
+                if (data.current < data.total) {
+                    setTimeout(updateProgress, 1000);
+                } else {
+                    status.innerText = "Data fetching complete!";
+                }
+            }
+
+            updateProgress();
+        </script>
     </body>
     </html>
     """
