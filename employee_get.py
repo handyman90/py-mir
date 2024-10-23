@@ -1,77 +1,112 @@
-import httpx
+import requests
+from fastapi import FastAPI, HTTPException
 import pandas as pd
-from fastapi import FastAPI
 
 app = FastAPI()
 
-# Fetch employee data from the server
-async def fetch_employees():
-    url = "https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee"
-    async with httpx.AsyncClient() as client:
-        response = await client.get(url)
-        response.raise_for_status()  # Raise an error for bad responses
+# Token URL and payload for authentication
+token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
+
+# Function to authenticate and get a session token
+def get_auth_token() -> dict:
+    payload = {
+        "grant_type": "password",
+        "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
+        "client_secret": "3gVM0RbnqDwXYfO1aekAyw",
+        "scope": "api",
+        "username": "apiuser",
+        "password": "apiuser"
+    }
+
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.post(token_url, data=payload, headers=headers)
+
+    if response.status_code == 200:
         return response.json()
+    else:
+        raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
-# Flatten employee data
+# Function to flatten employee data
 def flatten_employee_data(employee_data):
-    flattened_data = []
+    return {
+        "id": employee_data.get("id"),
+        "rowNumber": employee_data.get("rowNumber"),
+        "note": employee_data.get("note"),
+        "BranchID": employee_data.get("BranchID", {}).get("value"),
+        "Calendar": employee_data.get("Calendar", {}).get("value"),
+        "CashAccount": employee_data.get("CashAccount", {}).get("value"),
+        "CurrencyID": employee_data.get("CurrencyID", {}).get("value"),
+        "DateOfBirth": employee_data.get("DateOfBirth", {}).get("value"),
+        "DepartmentID": employee_data.get("DepartmentID", {}).get("value"),
+        "EmployeeClassID": employee_data.get("EmployeeClassID", {}).get("value"),
+        "EmployeeID": employee_data.get("EmployeeID", {}).get("value"),
+        "ExpenseAccount": employee_data.get("ExpenseAccount", {}).get("value"),
+        "ExpenseSubaccount": employee_data.get("ExpenseSubaccount", {}).get("value"),
+        "IdentityNumber": employee_data.get("IdentityNumber", {}).get("value"),
+        "IdentityType": employee_data.get("IdentityType", {}).get("value"),
+        "LastModifiedDateTime": employee_data.get("LastModifiedDateTime"),
+        "Name": employee_data.get("Name", {}).get("value"),
+        "PaymentMethod": employee_data.get("PaymentMethod", {}).get("value"),
+        "Status": employee_data.get("Status", {}).get("value"),
+        # Flatten Contact
+        "ContactID": employee_data.get("Contact", {}).get("id"),
+        "ContactDisplayName": employee_data.get("Contact", {}).get("DisplayName", {}).get("value"),
+        "ContactEmail": employee_data.get("Contact", {}).get("Email", {}).get("value"),
+        # Flatten Address
+        "AddressLine1": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"),
+        "AddressLine2": employee_data.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"),
+        "AddressCity": employee_data.get("Contact", {}).get("Address", {}).get("City", {}),
+        "AddressCountry": employee_data.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"),
+        "AddressPostalCode": employee_data.get("Contact", {}).get("Address", {}).get("PostalCode", {}),
+        "AddressState": employee_data.get("Contact", {}).get("Address", {}).get("State", {}),
+        # Flatten EmploymentHistory
+        "EmploymentHistoryPositionID": employee_data.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
+        "EmploymentHistoryStartDate": employee_data.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
+        "EmploymentHistoryEndDate": employee_data.get("EmploymentHistory", [{}])[0].get("EndDate", {}),
+        # Flatten PaymentInstruction
+        "PaymentInstructionValue": employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
+    }
 
-    for emp in employee_data:
-        flattened_emp = {
-            "id": emp.get("id"),
-            "rowNumber": emp.get("rowNumber"),
-            "note": emp.get("note"),
-            "BranchID": emp.get("BranchID", {}).get("value"),
-            "Calendar": emp.get("Calendar", {}).get("value"),
-            "CashAccount": emp.get("CashAccount", {}).get("value"),
-            "CurrencyID": emp.get("CurrencyID", {}).get("value"),
-            "DateOfBirth": emp.get("DateOfBirth", {}).get("value"),
-            "DepartmentID": emp.get("DepartmentID", {}).get("value"),
-            "EmployeeClassID": emp.get("EmployeeClassID", {}).get("value"),
-            "EmployeeID": emp.get("EmployeeID", {}).get("value"),
-            "ExpenseAccount": emp.get("ExpenseAccount", {}).get("value"),
-            "ExpenseSubaccount": emp.get("ExpenseSubaccount", {}).get("value"),
-            "IdentityNumber": emp.get("IdentityNumber", {}).get("value"),
-            "IdentityType": emp.get("IdentityType", {}).get("value"),
-            "LastModifiedDateTime": emp.get("LastModifiedDateTime"),
-            "Name": emp.get("Name", {}).get("value"),
-            "PaymentMethod": emp.get("PaymentMethod", {}).get("value"),
-            "Status": emp.get("Status", {}).get("value"),
-            # Flatten Contact
-            "ContactID": emp.get("Contact", {}).get("id"),
-            "ContactDisplayName": emp.get("Contact", {}).get("DisplayName", {}).get("value"),
-            "ContactEmail": emp.get("Contact", {}).get("Email", {}).get("value"),
-            # Flatten Address
-            "AddressLine1": emp.get("Contact", {}).get("Address", {}).get("AddressLine1", {}).get("value"),
-            "AddressLine2": emp.get("Contact", {}).get("Address", {}).get("AddressLine2", {}).get("value"),
-            "AddressCity": emp.get("Contact", {}).get("Address", {}).get("City"),
-            "AddressCountry": emp.get("Contact", {}).get("Address", {}).get("Country", {}).get("value"),
-            "AddressPostalCode": emp.get("Contact", {}).get("Address", {}).get("PostalCode"),
-            "AddressState": emp.get("Contact", {}).get("Address", {}).get("State"),
-            # Flatten EmploymentHistory
-            "EmploymentHistoryPositionID": emp.get("EmploymentHistory", [{}])[0].get("PositionID", {}).get("value"),
-            "EmploymentHistoryStartDate": emp.get("EmploymentHistory", [{}])[0].get("StartDate", {}).get("value"),
-            "EmploymentHistoryEndDate": emp.get("EmploymentHistory", [{}])[0].get("EndDate"),
-            # Flatten PaymentInstruction
-            "PaymentInstructionValue": emp.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
-        }
-        flattened_data.append(flattened_emp)
+# Function to save data to an Excel file
+def save_to_excel(employee_data):
+    df = pd.DataFrame(employee_data)
+    df.to_excel("employee_data.xlsx", index=False)
 
-    return flattened_data
-
-# Save data to Excel
-def save_to_excel(data, filename="employees.xlsx"):
-    df = pd.DataFrame(data)
-    df.to_excel(filename, index=False)
-
-# Endpoint to trigger fetching and saving employee data
 @app.get("/fetch_employees")
-async def fetch_and_save_employees():
-    employee_json = await fetch_employees()
-    flattened_data = flatten_employee_data(employee_json)
-    save_to_excel(flattened_data)
-    return {"message": "Employee data fetched and saved to Excel."}
+async def fetch_employees():
+    token = get_auth_token().get("access_token")
+    
+    # Initialize an empty list to store all employee data
+    all_employees = []
+    
+    page = 1
+    while True:
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json"
+        }
+        
+        # Fetch employee data from the API
+        response = requests.get(f"https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/{page}/Employee", headers=headers)
+        
+        if response.status_code != 200:
+            raise HTTPException(status_code=response.status_code, detail="Failed to fetch employee data")
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+        # Get employee data from the response
+        employee_data_list = response.json()
+        
+        # If there are no more employees, break the loop
+        if not employee_data_list:
+            break
+        
+        # Flatten and append each employee's data to the all_employees list
+        for employee_data in employee_data_list:
+            flattened_emp = flatten_employee_data(employee_data)
+            all_employees.append(flattened_emp)
+        
+        page += 1  # Move to the next page
+    
+    # Write all employee data to Excel
+    save_to_excel(all_employees)
+
+    return {"message": "Employee data fetched and saved to Excel."}
