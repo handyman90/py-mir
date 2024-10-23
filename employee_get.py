@@ -47,25 +47,29 @@ def fetch_employee_data():
         logging.error(f"Authentication failed: {e}")
         return
 
-    # Endpoint to retrieve employee IDs
+    # Endpoint to retrieve employee data
     ids_endpoint = "https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee"
     
-    # Fetching all employee IDs
+    # Fetching all employee data
     headers = {"Authorization": f"Bearer {access_token}"}
     response = requests.get(ids_endpoint, headers=headers)
     
     if response.status_code != 200:
-        logging.error(f"Failed to fetch employee IDs: {response.status_code} - {response.text}")
+        logging.error(f"Failed to fetch employee data: {response.status_code} - {response.text}")
         return
 
-    employee_ids = [emp['id'] for emp in response.json()]
-    logging.info(f"Fetched {len(employee_ids)} employee IDs: {employee_ids}")  # Log all fetched IDs
+    employee_data_list = response.json()
+    
+    # Extract EmployeeID for filtering
+    employee_ids = [emp['EmployeeID']['value'] for emp in employee_data_list if 'EmployeeID' in emp]
+
+    logging.info(f"Fetched {len(employee_ids)} EmployeeIDs: {employee_ids}")  # Log all fetched EmployeeIDs
 
     # Filter employee IDs based on your criteria
     filtered_employee_ids = [emp_id for emp_id in employee_ids if emp_id.startswith(('MIP', 'FEL', 'MIS', 'PSH'))]
 
     # Log filtered results
-    logging.info(f"Filtered {len(filtered_employee_ids)} employee IDs matching the criteria: {filtered_employee_ids}")
+    logging.info(f"Filtered {len(filtered_employee_ids)} EmployeeIDs matching the criteria: {filtered_employee_ids}")
 
     # Update progress total
     progress["total"] = len(filtered_employee_ids)
@@ -87,7 +91,7 @@ def fetch_employee_data():
             # Ensure that we only write Active employees to Excel
             if employee_data.get("Status", {}).get("value") == "Active":
                 flattened_emp = {
-                    "id": employee_data.get("id"),
+                    "EmployeeID": employee_data.get("EmployeeID", {}).get("value"),
                     "rowNumber": employee_data.get("rowNumber"),
                     "note": employee_data.get("note"),
                     "BranchID": employee_data.get("BranchID", {}).get("value"),
@@ -97,7 +101,6 @@ def fetch_employee_data():
                     "DateOfBirth": employee_data.get("DateOfBirth", {}).get("value"),
                     "DepartmentID": employee_data.get("DepartmentID", {}).get("value"),
                     "EmployeeClassID": employee_data.get("EmployeeClassID", {}).get("value"),
-                    "EmployeeID": employee_data.get("EmployeeID", {}).get("value"),
                     "ExpenseAccount": employee_data.get("ExpenseAccount", {}).get("value"),
                     "ExpenseSubaccount": employee_data.get("ExpenseSubaccount", {}).get("value"),
                     "IdentityNumber": employee_data.get("IdentityNumber", {}).get("value"),
@@ -127,7 +130,7 @@ def fetch_employee_data():
                 flattened_employees.append(flattened_emp)
                 progress["current"] += 1
         else:
-            logging.error(f"Failed to fetch data for employee ID {emp_id}: {emp_response.status_code} - {emp_response.text}")
+            logging.error(f"Failed to fetch data for EmployeeID {emp_id}: {emp_response.status_code} - {emp_response.text}")
 
     # Write to Excel only if data is available
     if flattened_employees:
