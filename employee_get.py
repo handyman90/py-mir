@@ -3,8 +3,12 @@ from fastapi.responses import JSONResponse, HTMLResponse
 import requests
 import pandas as pd
 import os
+import logging
 
 app = FastAPI()
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Token URL and payload for authentication
 token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
@@ -36,8 +40,12 @@ def fetch_employee_data():
     progress["current"] = 0
 
     # Get the authentication token
-    token_data = get_auth_token()
-    access_token = token_data["access_token"]
+    try:
+        token_data = get_auth_token()
+        access_token = token_data["access_token"]
+    except Exception as e:
+        logging.error(f"Authentication failed: {e}")
+        return
 
     # Endpoint to retrieve employee IDs
     ids_endpoint = "https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee"
@@ -47,7 +55,8 @@ def fetch_employee_data():
     response = requests.get(ids_endpoint, headers=headers)
     
     if response.status_code != 200:
-        raise HTTPException(status_code=response.status_code, detail="Failed to fetch employee IDs")
+        logging.error(f"Failed to fetch employee IDs: {response.status_code} - {response.text}")
+        return
 
     employee_ids = [emp['id'] for emp in response.json()]
 
@@ -113,7 +122,7 @@ def fetch_employee_data():
                 flattened_employees.append(flattened_emp)
                 progress["current"] += 1
         else:
-            print(f"Failed to fetch data for employee ID {emp_id}")
+            logging.error(f"Failed to fetch data for employee ID {emp_id}: {emp_response.status_code} - {emp_response.text}")
 
     # Write to Excel
     df = pd.DataFrame(flattened_employees)
