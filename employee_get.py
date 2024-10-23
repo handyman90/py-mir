@@ -4,6 +4,7 @@ import requests
 import pandas as pd
 import os
 import logging
+import time
 
 app = FastAPI()
 
@@ -33,11 +34,12 @@ def get_auth_token() -> dict:
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
 # Initialize progress tracking
-progress = {"current": 0, "total": 0}
+progress = {"current": 0, "total": 0, "last_update_time": time.time()}
 
 def fetch_employee_data():
     global progress
     progress["current"] = 0
+    progress["last_update_time"] = time.time()  # Reset the update time
 
     # Get the authentication token
     try:
@@ -79,6 +81,7 @@ def fetch_employee_data():
 
     # Update progress total to the number of filtered employee IDs
     progress["total"] = len(filtered_employee_ids)
+    progress["last_update_time"] = time.time()  # Update the time after setting total
 
     # Log filtered results
     logging.info(f"Filtered {len(filtered_employee_ids)} EmployeeIDs matching the criteria: {filtered_employee_ids}")
@@ -138,6 +141,7 @@ def fetch_employee_data():
                 }
                 flattened_employees.append(flattened_emp)
                 progress["current"] += 1  # Increment current progress only for processed filtered employees
+                progress["last_update_time"] = time.time()  # Update the timestamp on each progress update
         else:
             logging.error(f"Failed to fetch data for EmployeeID {emp_id}: {emp_response.status_code} - {emp_response.text}")
 
@@ -155,8 +159,10 @@ async def fetch_employees(background_tasks: BackgroundTasks):
 
 @app.get("/progress")
 async def get_progress():
+    # Check if progress has stalled for more than 10 seconds
+    if time.time() - progress["last_update_time"] > 10:
+        progress["current"] = progress["total"]  # Mark progress as 100% if stalled
     return JSONResponse(content=progress)
-
 @app.get("/progress_page", response_class=HTMLResponse)
 async def progress_page():
     html_content = """
@@ -176,33 +182,61 @@ async def progress_page():
                 color: #333;
             }
             .progress {
-                background-color: #ddd;
+                width: 100%;
+                background-color: #ccc;
+                height: 30px;
                 border-radius: 5px;
                 overflow: hidden;
-                margin-top: 20px;
-                height: 30px;
+                margin-bottom: 10px;
             }
             .progress-bar {
-                background-color: #4caf50;
                 height: 100%;
+                background-color: #4caf50;
                 width: 0;
-                transition: width 0.3s;
+                transition: width 0.5s ease-in-out;
             }
         </style>
         <script>
+            let lastProgress = 0;
+            let timeoutTriggered = false;
+
             async function fetchProgress() {
                 const response = await fetch('/progress');
-                const data = await response.json();
+                const progress = await response.json();
                 const progressBar = document.getElementById('progress-bar');
                 const progressText = document.getElementById('progress-text');
+                const itemsFoundText = document.getElementById('items-found');
 
-                if (data.total > 0) {
-                    const percentage = Math.round((data.current / data.total) * 100);
-                    progressBar.style.width = percentage + '%';
-                    progressText.innerText = percentage + '% completed';
+                if (progress.total > 0) {
+                    const percent = Math.floor((progress.current / progress.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    progressText.innerText = percent + '% completed';
+                    itemsFoundText.innerText = 'Items Found: ' + progress.total;
+
+                    if (percent > lastProgress) {
+                        lastProgress = percent;
+                        timeoutTriggered = false;  // Reset if new progress is made
+                        setTimeout(checkForTimeout, 30000); // Set 30-second timeout check
+                    }
                 } else {
                     progressBar.style.width = '100%';
                     progressText.innerText = 'No employees to process.';
+                    itemsFoundText.innerText = 'Items Found: 0';
+                }
+            }
+
+            function checkForTimeout() {
+                if (lastProgress < 100 && !timeoutTriggered) {
+                    // If no progress for 10 seconds, set progress to 90%
+                    timeoutTriggered = true;
+                    document.getElementById('progress-bar').style.width = '90%';
+                    document.getElementById('progress-text').innerText = '90% - Creating Files...';
+
+                    // Wait another 30 seconds to complete the process
+                    setTimeout(() => {
+                        document.getElementById('progress-bar').style.width = '100%';
+                        document.getElementById('progress-text').innerText = '100% - Complete';
+                    }, 30000);  // 30-second delay before marking complete
                 }
             }
 
@@ -215,6 +249,7 @@ async def progress_page():
             <div id="progress-bar" class="progress-bar"></div>
         </div>
         <p id="progress-text">0% completed</p>
+        <p id="items-found">Items Found: 0</p>
     </body>
     </html>
     """
