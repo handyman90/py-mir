@@ -1,8 +1,14 @@
 import requests
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, BackgroundTasks
 import pandas as pd
+from fastapi.responses import JSONResponse
+from typing import Dict
+from time import sleep
 
 app = FastAPI()
+
+# Dictionary to store progress status
+progress: Dict[str, int] = {"percent": 0}
 
 # Token URL and payload for authentication
 token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
@@ -72,10 +78,10 @@ def save_to_excel(employee_data):
     df = pd.DataFrame(employee_data)
     df.to_excel("employee_data.xlsx", index=False)
 
-@app.get("/fetch_employees")
-async def fetch_employees():
+def background_fetch_employees():
+    global progress
     token = get_auth_token().get("access_token")
-    
+
     # Initialize an empty list to store all employee data
     all_employees = []
     
@@ -103,10 +109,24 @@ async def fetch_employees():
         for employee_data in employee_data_list:
             flattened_emp = flatten_employee_data(employee_data)
             all_employees.append(flattened_emp)
-        
+
+        # Update progress
+        progress["percent"] = min(100, page * 10)  # Example logic to update progress based on pages
         page += 1  # Move to the next page
-    
+        sleep(0.5)  # Simulate some processing time
+
     # Write all employee data to Excel
     save_to_excel(all_employees)
 
-    return {"message": "Employee data fetched and saved to Excel."}
+    # Final progress update
+    progress["percent"] = 100
+
+@app.get("/fetch_employees")
+async def fetch_employees(background_tasks: BackgroundTasks):
+    progress["percent"] = 0  # Reset progress
+    background_tasks.add_task(background_fetch_employees)
+    return JSONResponse(content={"message": "Employee data fetch initiated. Check progress."})
+
+@app.get("/progress")
+async def get_progress():
+    return progress
