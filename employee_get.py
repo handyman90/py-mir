@@ -3,6 +3,7 @@ import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.middleware.cors import CORSMiddleware
+import logging
 
 app = FastAPI()
 
@@ -14,6 +15,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
 
 # Token URL and payload for authentication
 token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
@@ -56,9 +60,16 @@ async def fetch_employees(token: str):
             break
 
         for employee_data in employees:
-            if isinstance(employee_data, dict) and employee_data.get("Status", {}).get("value") == "Active":
-                yield flatten_employee_data(employee_data)
-        
+            # Log the type of employee_data for debugging
+            logging.info(f"Processing employee_data: {employee_data}")
+
+            # Check if employee_data is a dictionary
+            if isinstance(employee_data, dict):
+                if employee_data.get("Status", {}).get("value") == "Active":
+                    yield flatten_employee_data(employee_data)
+            else:
+                logging.warning(f"Expected a dict but got: {type(employee_data)}")
+
         page += 1  # Move to the next page
 
 # Flattening employee data
