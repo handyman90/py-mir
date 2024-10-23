@@ -59,7 +59,7 @@ def fetch_employee_data():
         return
 
     employee_ids = [emp['id'] for emp in response.json()]
-    logging.info(f"Fetched {len(employee_ids)} employee IDs.")
+    logging.info(f"Fetched {len(employee_ids)} employee IDs: {employee_ids}")  # Log all fetched IDs
 
     # Filter employee IDs based on your criteria
     filtered_employee_ids = [emp_id for emp_id in employee_ids if emp_id.startswith(('MIP', 'FEL', 'MIS', 'PSH'))]
