@@ -2,7 +2,6 @@ import requests
 import pandas as pd
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
@@ -141,6 +140,3 @@ async def get_html():
     </body>
     </html>
     """
-
-# Static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
