@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, BackgroundTasks
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 import requests
 import pandas as pd
 import os
@@ -59,20 +59,29 @@ def fetch_employee_data():
         return
 
     employee_data_list = response.json()
-    
+    logging.debug(f"Received employee data: {employee_data_list}")  # Debug logging
+
     # Extract EmployeeID for filtering
-    employee_ids = [emp['EmployeeID']['value'] for emp in employee_data_list if 'EmployeeID' in emp]
+    employee_ids = [
+        emp['EmployeeID']['value'] 
+        for emp in employee_data_list 
+        if 'EmployeeID' in emp and isinstance(emp['EmployeeID'], dict) and 'value' in emp['EmployeeID']
+    ]
 
     logging.info(f"Fetched {len(employee_ids)} EmployeeIDs: {employee_ids}")  # Log all fetched EmployeeIDs
 
     # Filter employee IDs based on your criteria
-    filtered_employee_ids = [emp_id for emp_id in employee_ids if emp_id.startswith(('MIP', 'FEL', 'MIS', 'PSH'))]
+    filtered_employee_ids = [
+        emp_id 
+        for emp_id in employee_ids 
+        if isinstance(emp_id, str) and emp_id.startswith(('MIP', 'FEL', 'MIS', 'PSH'))
+    ]
+
+    # Update progress total to the number of filtered employee IDs
+    progress["total"] = len(filtered_employee_ids)
 
     # Log filtered results
     logging.info(f"Filtered {len(filtered_employee_ids)} EmployeeIDs matching the criteria: {filtered_employee_ids}")
-
-    # Update progress total
-    progress["total"] = len(filtered_employee_ids)
 
     # Prepare the data for Excel
     flattened_employees = []
@@ -128,7 +137,7 @@ def fetch_employee_data():
                     "PaymentInstructionValue": employee_data.get("PaymentInstruction", [{}])[0].get("Value", {}).get("value"),
                 }
                 flattened_employees.append(flattened_emp)
-                progress["current"] += 1
+                progress["current"] += 1  # Increment current progress only for processed filtered employees
         else:
             logging.error(f"Failed to fetch data for EmployeeID {emp_id}: {emp_response.status_code} - {emp_response.text}")
 
@@ -147,3 +156,66 @@ async def fetch_employees(background_tasks: BackgroundTasks):
 @app.get("/progress")
 async def get_progress():
     return JSONResponse(content=progress)
+
+@app.get("/progress_page", response_class=HTMLResponse)
+async def progress_page():
+    html_content = """
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Progress Page</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background-color: #f0f0f0;
+                padding: 20px;
+            }
+            h1 {
+                color: #333;
+            }
+            .progress {
+                background-color: #ddd;
+                border-radius: 5px;
+                overflow: hidden;
+                margin-top: 20px;
+                height: 30px;
+            }
+            .progress-bar {
+                background-color: #4caf50;
+                height: 100%;
+                width: 0;
+                transition: width 0.3s;
+            }
+        </style>
+        <script>
+            async function fetchProgress() {
+                const response = await fetch('/progress');
+                const data = await response.json();
+                const progressBar = document.getElementById('progress-bar');
+                const progressText = document.getElementById('progress-text');
+
+                if (data.total > 0) {
+                    const percentage = Math.round((data.current / data.total) * 100);
+                    progressBar.style.width = percentage + '%';
+                    progressText.innerText = percentage + '% completed';
+                } else {
+                    progressBar.style.width = '100%';
+                    progressText.innerText = 'No employees to process.';
+                }
+            }
+
+            setInterval(fetchProgress, 1000);
+        </script>
+    </head>
+    <body>
+        <h1>Employee Data Fetch Progress</h1>
+        <div class="progress">
+            <div id="progress-bar" class="progress-bar"></div>
+        </div>
+        <p id="progress-text">0% completed</p>
+    </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content)
