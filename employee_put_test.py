@@ -32,7 +32,8 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
         stmt = select(peribadi_GRP).where(peribadi_GRP.c.NoStaf == no_staf)
         result = db.execute(stmt).fetchone()  # Fetch one record
         if result:
-            return dict(result)  # Convert Row to dictionary
+            # Convert the Row to a dictionary manually
+            return {column: value for column, value in result.items()}
         else:
             raise HTTPException(status_code=404, detail="Employee not found")
     except Exception as e:
