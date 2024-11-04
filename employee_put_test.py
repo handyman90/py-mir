@@ -1,46 +1,58 @@
-from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine, select, Table, MetaData
+from fastapi import FastAPI, HTTPException
+from sqlalchemy import create_engine, MetaData, Table, select
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.future import select
+import databases
 
-# Database connection string
-SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
+# Database connection settings
+DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
 
-# Setup the database engine and session
-engine = create_engine(SQLALCHEMY_DATABASE_URL)
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+# Create an async database engine
+engine = create_async_engine(DATABASE_URL, echo=True)
+database = databases.Database(DATABASE_URL)
 
-# Create MetaData instance
+# Create metadata and define the table
 metadata = MetaData()
+peribadi = Table('peribadi', metadata, autoload_with=engine)
 
-# Reflect the table structure
-peribadi_GRP = Table("peribadi_GRP", metadata, autoload_with=engine)
-
-# FastAPI instance
+# Create FastAPI app
 app = FastAPI()
 
-# Dependency to get the database session
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Dependency to get a database session
+async def get_db():
+    async with database.connection() as connection:
+        yield connection
 
-@app.get("/get_employee/{no_staf}")
-async def get_employee(no_staf: str, db=Depends(get_db)):
-    try:
-        # Select specific columns from the table
-        stmt = select(peribadi_GRP.c.Nama, peribadi_GRP.c.NoStaf, peribadi_GRP.c.Nokt, peribadi_GRP.c.Nokpbaru).where(peribadi_GRP.c.NoStaf == no_staf)
-        result = db.execute(stmt).fetchone()  # Fetch one record
-        if result:
-            # Convert the Row to a dictionary manually using indexing
-            return {
-                "Nama": result[0],        # Corresponds to Nama
-                "NoStaf": result[1],      # Corresponds to NoStaf
-                "Nokt": result[2],        # Corresponds to Nokt
-                "Nokpbaru": result[3]     # Corresponds to Nokpbaru
-            }
-        else:
-            raise HTTPException(status_code=404, detail="Employee not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+# Connect to the database on startup
+@app.on_event("startup")
+async def startup():
+    await database.connect()
+
+# Disconnect from the database on shutdown
+@app.on_event("shutdown")
+async def shutdown():
+    await database.disconnect()
+
+# Endpoint to get employee data by NoStaf
+@app.get("/get_employee/{NoStaf}")
+async def get_employee(NoStaf: str):
+    # Execute the query
+    query = select(peribadi).where(peribadi.c.NoStaf == NoStaf)
+    result = await database.fetch_one(query)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    # Convert the Row to a dictionary manually
+    employee_data = {
+        "Nama": result['Nama'],
+        "NoStaf": result['NoStaf'],
+        "Nokt": result['Nokt'],
+        "Nokpbaru": result['Nokpbaru']
+    }
+
+    return employee_data
+
+# Run the FastAPI app with Uvicorn
+# To run the app, use the command: uvicorn your_filename:app --reload
