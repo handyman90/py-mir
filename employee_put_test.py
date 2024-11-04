@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine, select
+from sqlalchemy import create_engine, select, Table, MetaData
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy import Table, MetaData
 
 # Database connection string
 SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
@@ -9,13 +8,23 @@ SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?dr
 # Setup the database engine and session
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-metadata = MetaData(bind=engine)
+
+# Create MetaData instance
+metadata = MetaData()
 
 # Reflect the table structure
 peribadi_GRP = Table("peribadi_GRP", metadata, autoload_with=engine)
 
 # FastAPI instance
 app = FastAPI()
+
+# Dependency to get the database session
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @app.get("/get_employee/{no_staf}")
 async def get_employee(no_staf: str, db=Depends(get_db)):
