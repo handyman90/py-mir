@@ -18,8 +18,8 @@ token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
 def get_auth_token() -> dict:
     payload = {
         "grant_type": "password",
-        "client_id": "03407458-3136-511B-24FB-68D470104D22@MIROS 090624",
-        "client_secret": "3gVM0RbnqDwXYfO1aekAyw",
+        "client_id": "09D13B0E-EE60-0477-BDC6-2A3A6A317443@MIROS 291024",
+        "client_secret": "NvBmVGWtGsN7LrCe1AvS8w",
         "scope": "api",
         "username": "apiuser",
         "password": "apiuser"
@@ -202,34 +202,27 @@ async def progress_page():
     </head>
     <body>
         <h1>Employee Data Fetch Progress</h1>
-        <div class="progress" id="progress">
-            <div class="progress-bar" id="progress-bar" style="width: 0%;"></div>
+        <div class="progress">
+            <div id="progress-bar" class="progress-bar" style="width: 0%;"></div>
         </div>
-        <div id="status">Fetching data...</div>
+        <p id="status">Starting data fetch...</p>
         <script>
             async function updateProgress() {
-                const response = await fetch("/progress");
-                const data = await response.json();
-                const progressBar = document.getElementById("progress-bar");
-                const status = document.getElementById("status");
-
-                if (data.total > 0) {
-                    const percentage = (data.current / data.total) * 100;
-                    progressBar.style.width = percentage + '%';
-                    status.innerText = `Processed ${data.current} of ${data.total} records.`;
-                } else {
-                    progressBar.style.width = '100%';
-                    status.innerText = "No records to process.";
-                }
-
-                // Stop updating if finished
-                if (data.current < data.total) {
-                    setTimeout(updateProgress, 1000);
-                } else {
-                    status.innerText = "Data fetching complete!";
+                try {
+                    const response = await fetch('/progress');
+                    const data = await response.json();
+                    const percent = data.total ? Math.round((data.current / data.total) * 100) : 0;
+                    document.getElementById('progress-bar').style.width = percent + '%';
+                    document.getElementById('status').innerText = `Progress: ${data.current} / ${data.total}`;
+                    if (data.current < data.total) {
+                        setTimeout(updateProgress, 1000);
+                    } else {
+                        document.getElementById('status').innerText = "Data fetch completed!";
+                    }
+                } catch (error) {
+                    document.getElementById('status').innerText = "Error fetching progress.";
                 }
             }
-
             updateProgress();
         </script>
     </body>
