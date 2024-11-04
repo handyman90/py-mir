@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Depends
-from sqlalchemy import create_engine, select, Table, MetaData
+from sqlalchemy import create_engine, select, Table, MetaData, Column
 from sqlalchemy.orm import sessionmaker
 
 # Database connection string
@@ -29,11 +29,12 @@ def get_db():
 @app.get("/get_employee/{no_staf}")
 async def get_employee(no_staf: str, db=Depends(get_db)):
     try:
-        stmt = select(peribadi_GRP).where(peribadi_GRP.c.NoStaf == no_staf)
+        # Select specific columns from the table
+        stmt = select(peribadi_GRP.c.Nama, peribadi_GRP.c.NoStaf, peribadi_GRP.c.Nokt, peribadi_GRP.c.Nokpbaru).where(peribadi_GRP.c.NoStaf == no_staf)
         result = db.execute(stmt).fetchone()  # Fetch one record
         if result:
             # Convert the Row to a dictionary manually
-            return {column: value for column, value in result.items()}
+            return {column.name: value for column, value in zip(result.keys(), result)}  # Use zip for proper mapping
         else:
             raise HTTPException(status_code=404, detail="Employee not found")
     except Exception as e:
