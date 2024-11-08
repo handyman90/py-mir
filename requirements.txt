@@ -1,0 +1,6 @@
+fastapi[all]
+pandas
+openpyxl
+requests
+aiofiles
+uvicorn
