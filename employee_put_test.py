@@ -38,6 +38,26 @@ def get_db():
     finally:
         db.close()
 
+# Function to authenticate and get a session token
+def get_auth_token() -> dict:
+    token_url = "https://csmstg.censof.com/2023R1Preprod/connect/token"
+    payload = {
+        "grant_type": "password",
+        "client_id": "09D13B0E-EE60-0477-BDC6-2A3A6A317443@MIROS 291024",
+        "client_secret": "NvBmVGWtGsN7LrCe1AvS8w",
+        "scope": "api",
+        "username": "apiuser",
+        "password": "apiuser"
+    }
+
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    response = requests.post(token_url, data=payload, headers=headers)
+
+    if response.status_code == 200:
+        return response.json()
+    else:
+        raise HTTPException(status_code=response.status_code, detail="Authentication failed")
+
 @app.get("/get_employee/{no_staf}")
 async def get_employee(no_staf: str, db=Depends(get_db)):
     try:
@@ -91,10 +111,15 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
                 ]
             }
 
+            # Get the authentication token
+            auth_token = get_auth_token()
+            access_token = auth_token.get("access_token")
+
             # Send PUT request to the external API
             url = "https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee"
             headers = {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {access_token}"
             }
             response = requests.put(url, headers=headers, data=json.dumps(employee))
 
