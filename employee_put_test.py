@@ -1,7 +1,11 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine, select, Table, MetaData
 from sqlalchemy.orm import sessionmaker
-from typing import List, Optional, Dict, Any
+import logging
+
+# Setup logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Database connection string
 SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
@@ -14,7 +18,12 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 metadata = MetaData()
 
 # Reflect the table structure for "peribadi"
-peribadi = Table("peribadi", metadata, autoload_with=engine)
+try:
+    peribadi = Table("peribadi", metadata, autoload_with=engine)
+    logger.info("Table structure reflected successfully.")
+except Exception as e:
+    logger.error(f"Error reflecting table structure: {e}")
+    raise
 
 # FastAPI instance
 app = FastAPI()
@@ -30,6 +39,7 @@ def get_db():
 @app.get("/get_employee/{no_staf}")
 async def get_employee(no_staf: str, db=Depends(get_db)):
     try:
+        logger.info(f"Fetching employee data for NoStaf: {no_staf}")
         # Select specific columns from the "peribadi" table
         stmt = select(
             peribadi.c.NoStaf, peribadi.c.EmployeeClassID, peribadi.c.BranchID,
@@ -42,6 +52,7 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
         ).where(peribadi.c.NoStaf == no_staf)
         result = db.execute(stmt).fetchone()  # Fetch one record
         if result:
+            logger.info(f"Employee data fetched successfully for NoStaf: {no_staf}")
             # Map the database columns to the expected JSON structure
             employee = {
                 "EmployeeID": {"value": result[0]},  # NoStaf
@@ -79,8 +90,10 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
             }
             return employee
         else:
+            logger.warning(f"Employee not found for NoStaf: {no_staf}")
             raise HTTPException(status_code=404, detail="Employee not found")
     except Exception as e:
+        logger.error(f"Error fetching employee data: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 # To run the application, use the following command:
