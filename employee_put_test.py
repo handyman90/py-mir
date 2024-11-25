@@ -45,7 +45,7 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
             peribadi.c.NoStaf, peribadi.c.EmployeeClassID, peribadi.c.BranchID,
             peribadi.c.DepartmentID, peribadi.c.tkhLahir, peribadi.c.Nokpbaru,
             peribadi.c.Carapembayaran, peribadi.c.CashAccount, peribadi.c.Status_grp,
-            peribadi.c.LastName_grp, peribadi.c.TelefonB, peribadi.c.email,
+            peribadi.c.LastName_grp, peribadi.c.TelefonB, peribadi.c.EMAIL,
             peribadi.c.Alamat1, peribadi.c.Alamat2, peribadi.c.BANDAR, peribadi.c.Poskod,
             peribadi.c.NEGERI, peribadi.c.Active_grp, peribadi.c.PositionID_grp,
             peribadi.c.startdate_grp
@@ -70,7 +70,7 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
                     "LastName": {"value": result[9] if result[9] else None},  # LastName_grp
                     "Phone1": {"value": result[10] if result[10] else None},  # TelefonB
                     "Phone2": {"value": result[10] if result[10] else None},  # TelefonB
-                    "Email": {"value": result[11] if result[11] else None},  # email
+                    "Email": {"value": result[11] if result[11] else None},  # EMAIL
                     "Address": {
                         "AddressLine1": {"value": result[12] if result[12] else None},  # Alamat1
                         "AddressLine2": {"value": result[13] if result[13] else None},  # Alamat2
