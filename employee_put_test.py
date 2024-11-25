@@ -57,35 +57,35 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
             logger.info(f"Employee data fetched successfully for NoStaf: {no_staf}")
             # Map the database columns to the expected JSON structure
             employee = {
-                "EmployeeID": {"value": result[0] if result[0] else None},  # NoStaf
-                "EmployeeClassID": {"value": result[1] if result[1] else None},  # EmployeeClassID
-                "BranchID": {"value": result[2] if result[2] else None},  # BranchID
-                "DepartmentID": {"value": result[3] if result[3] else None},  # DepartmentID
+                "EmployeeID": {"value": result[0].strip() if result[0] else None},  # NoStaf
+                "EmployeeClassID": {"value": result[1].strip() if result[1] else None},  # EmployeeClassID
+                "BranchID": {"value": result[2].strip() if result[2] else None},  # BranchID
+                "DepartmentID": {"value": result[3].strip() if result[3] else None},  # DepartmentID
                 "Calendar": {"value": "NORMAL"},  # Assuming a default value
                 "DateOfBirth": {"value": result[4].strftime('%Y-%m-%d') if result[4] else None},  # tkhLahir
                 "IdentityType": {"value": "New IC No."},  # Assuming a default value
-                "IdentityNumber": {"value": result[5] if result[5] else None},  # Nokpbaru
-                "PaymentMethod": {"value": result[6] if result[6] else None},  # Carapembayaran
-                "CashAccount": {"value": result[7] if result[7] else None},  # CashAccount
-                "Status": {"value": result[8] if result[8] else None},  # Status_grp
+                "IdentityNumber": {"value": result[5].strip() if result[5] else None},  # Nokpbaru
+                "PaymentMethod": {"value": result[6].strip() if result[6] else None},  # Carapembayaran
+                "CashAccount": {"value": result[7].strip() if result[7] else None},  # CashAccount
+                "Status": {"value": result[8].strip() if result[8] else None},  # Status_grp
                 "Contact": {
-                    "LastName": {"value": result[9] if result[9] else None},  # LastName_grp
-                    "Phone1": {"value": result[10] if result[10] else None},  # TelefonB
-                    "Phone2": {"value": result[10] if result[10] else None},  # TelefonB
-                    "Email": {"value": result[11] if result[11] else None},  # EMAIL
+                    "LastName": {"value": result[9].strip() if result[9] else None},  # LastName_grp
+                    "Phone1": {"value": result[10].strip() if result[10] else None},  # TelefonB
+                    "Phone2": {"value": result[10].strip() if result[10] else None},  # TelefonB
+                    "Email": {"value": result[11].strip() if result[11] else None},  # EMAIL
                     "Address": {
-                        "AddressLine1": {"value": result[12] if result[12] else None},  # Alamat1
-                        "AddressLine2": {"value": result[13] if result[13] else None},  # Alamat2
-                        "City": {"value": result[14] if result[14] else None},  # BANDAR
+                        "AddressLine1": {"value": result[12].strip() if result[12] else None},  # Alamat1
+                        "AddressLine2": {"value": result[13].strip() if result[13] else None},  # Alamat2
+                        "City": {"value": result[14].strip() if result[14] else None},  # BANDAR
                         "Country": {"value": "MY"},  # Assuming a default value
-                        "PostalCode": {"value": result[15] if result[15] else None},  # Poskod
-                        "State": {"value": result[16] if result[16] else None}  # NEGERI
+                        "PostalCode": {"value": result[15].strip() if result[15] else None},  # Poskod
+                        "State": {"value": result[16].strip() if result[16] else None}  # NEGERI
                     }
                 },
                 "EmploymentHistory": [
                     {
                         "Active": {"value": result[17] if result[17] else None},  # Active_grp
-                        "PositionID": {"value": result[18] if result[18] else None},  # PositionID_grp
+                        "PositionID": {"value": result[18].strip() if result[18] else None},  # PositionID_grp
                         "StartDate": {"value": result[19].strftime('%Y-%m-%d') if result[19] else None}  # startdate_grp
                     }
                 ]
