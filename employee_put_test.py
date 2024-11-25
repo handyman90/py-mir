@@ -56,6 +56,7 @@ def get_auth_token() -> dict:
     if response.status_code == 200:
         return response.json()
     else:
+        logger.error(f"Authentication failed. Status code: {response.status_code}, Response: {response.text}")
         raise HTTPException(status_code=response.status_code, detail="Authentication failed")
 
 @app.get("/get_employee/{no_staf}")
@@ -133,7 +134,7 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
             logger.warning(f"Employee not found for NoStaf: {no_staf}")
             raise HTTPException(status_code=404, detail="Employee not found")
     except Exception as e:
-        logger.error(f"Error fetching employee data: {e}")
+        logger.error(f"Error fetching employee data: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 # To run the application, use the following command:
