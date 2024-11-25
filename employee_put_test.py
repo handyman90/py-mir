@@ -40,7 +40,7 @@ def get_db():
 
 # Function to authenticate and get a session token
 def get_auth_token() -> dict:
-    token_url = "https://csmstg.censof.com/2023R1Preprod/connect/token"
+    token_url = "https://csmstg.censof.com/2023R1Preprod/identity/connect/token"
     payload = {
         "grant_type": "password",
         "client_id": "09D13B0E-EE60-0477-BDC6-2A3A6A317443@MIROS 291024",
