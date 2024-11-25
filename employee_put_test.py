@@ -60,7 +60,7 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
                 "BranchID": {"value": result[2]},  # BranchID
                 "DepartmentID": {"value": result[3]},  # DepartmentID
                 "Calendar": {"value": "NORMAL"},  # Assuming a default value
-                "DateOfBirth": {"value": result[4].strftime('%Y-%m-%d')},  # tkhLahir
+                "DateOfBirth": {"value": result[4].strftime('%Y-%m-%d') if result[4] else None},  # tkhLahir
                 "IdentityType": {"value": "New IC No."},  # Assuming a default value
                 "IdentityNumber": {"value": result[5]},  # Nokpbaru
                 "PaymentMethod": {"value": result[6]},  # Carapembayaran
@@ -84,7 +84,7 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
                     {
                         "Active": {"value": result[17]},  # Active_grp
                         "PositionID": {"value": result[18]},  # PositionID_grp
-                        "StartDate": {"value": result[19].strftime('%Y-%m-%d')}  # startdate_grp
+                        "StartDate": {"value": result[19].strftime('%Y-%m-%d') if result[19] else None}  # startdate_grp
                     }
                 ]
             }
