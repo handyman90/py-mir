@@ -1,8 +1,7 @@
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine, select, Table, MetaData
 from sqlalchemy.orm import sessionmaker
-from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 # Database connection string
 SQLALCHEMY_DATABASE_URL = "mssql+pyodbc://sa:sa%40121314@localhost:1433/MiHRS?driver=ODBC+Driver+17+for+SQL+Server"
@@ -28,43 +27,7 @@ def get_db():
     finally:
         db.close()
 
-# Pydantic model for the expected JSON structure
-class Address(BaseModel):
-    AddressLine1: Optional[str] = None
-    AddressLine2: Optional[str] = None
-    City: Optional[str] = None
-    Country: Optional[str] = None
-    PostalCode: Optional[str] = None
-    State: Optional[str] = None
-
-class Contact(BaseModel):
-    LastName: Optional[str] = None
-    Phone1: Optional[str] = None
-    Phone2: Optional[str] = None
-    Email: Optional[str] = None
-    Address: Optional[Address] = None
-
-class EmploymentHistory(BaseModel):
-    Active: Optional[bool] = None
-    PositionID: Optional[str] = None
-    StartDate: Optional[str] = None
-
-class Employee(BaseModel):
-    EmployeeID: Optional[str] = None
-    EmployeeClassID: Optional[str] = None
-    BranchID: Optional[str] = None
-    DepartmentID: Optional[str] = None
-    Calendar: Optional[str] = None
-    DateOfBirth: Optional[str] = None
-    IdentityType: Optional[str] = None
-    IdentityNumber: Optional[str] = None
-    PaymentMethod: Optional[str] = None
-    CashAccount: Optional[str] = None
-    Status: Optional[str] = None
-    Contact: Optional[Contact] = None
-    EmploymentHistory: Optional[List[EmploymentHistory]] = None
-
-@app.get("/get_employee/{no_staf}", response_model=Employee)
+@app.get("/get_employee/{no_staf}")
 async def get_employee(no_staf: str, db=Depends(get_db)):
     try:
         # Select specific columns from the "peribadi" table
