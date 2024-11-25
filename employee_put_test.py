@@ -1,3 +1,5 @@
+import requests
+import json
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy import create_engine, select, Table, MetaData
 from sqlalchemy.orm import sessionmaker
@@ -88,7 +90,20 @@ async def get_employee(no_staf: str, db=Depends(get_db)):
                     }
                 ]
             }
-            return employee
+
+            # Send PUT request to the external API
+            url = "https://csmstg.censof.com/2023R1Preprod/entity/GRP9Default/1/Employee"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            response = requests.put(url, headers=headers, data=json.dumps(employee))
+
+            if response.status_code == 200:
+                logger.info(f"Successfully sent PUT request for NoStaf: {no_staf}")
+                return {"message": "Employee data sent successfully", "response": response.json()}
+            else:
+                logger.error(f"Failed to send PUT request for NoStaf: {no_staf}. Status code: {response.status_code}, Response: {response.text}")
+                raise HTTPException(status_code=response.status_code, detail=response.text)
         else:
             logger.warning(f"Employee not found for NoStaf: {no_staf}")
             raise HTTPException(status_code=404, detail="Employee not found")
